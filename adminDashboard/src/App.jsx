@@ -1,16 +1,29 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login';
+import AdminLayout from './components/AdminLayout';
+import DashboardHome from './pages/DashboardHome';
+import Users from './pages/Users';
+import Categories from './pages/Categories';
+import Videos from './pages/Videos';
+import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const isAuth = !!localStorage.getItem('admin_token');
 
   return (
-    <div className='text-center mt-64'>
-      Hello world
-    </div>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/" element={isAuth ? <AdminLayout /> : <Navigate to="/login" replace />}>
+          <Route index element={<DashboardHome />} />
+          <Route path="users" element={<Users />} />
+          <Route path="categories" element={<Categories />} />
+          <Route path="videos" element={<Videos />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;

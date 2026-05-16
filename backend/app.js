@@ -12,6 +12,9 @@ const app = express();
 
 // Route files
 const auth = require('./routes/auth');
+const admin = require('./routes/admin');
+const users = require('./routes/users');
+const categories = require('./routes/categories');
 const video = require('./routes/video');
 const comment = require('./routes/comment');
 const subscription = require('./routes/subscription');
@@ -32,6 +35,9 @@ if (process.env.NODE_ENV === 'development') {
 
 // Mount routers
 app.use('/api/auth', auth);
+app.use('/api/admin', admin);
+app.use('/api/users', users);
+app.use('/api/categories', categories);
 app.use('/api/videos', video);
 app.use('/api/comments', comment);
 app.use('/api/subscriptions', subscription);
