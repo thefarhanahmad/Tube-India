@@ -105,91 +105,60 @@ const Videos = () => {
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Videos</h2>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="px-3 py-1 bg-blue-600 text-white rounded"
-        >
-          Upload Video
-        </button>
+        <button onClick={() => setShowAdd(true)} className="px-3 py-1 bg-blue-600 text-white rounded">Upload Video</button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {videos.map((v) => (
-          <div key={v._id} className="bg-white rounded shadow p-3">
-            <img
-              src={v.thumbnail}
-              alt="thumb"
-              className="w-full h-40 object-cover rounded mb-2"
-            />
-            <h3 className="font-semibold">{v.title}</h3>
-            <p className="text-sm text-gray-500">
-              By: {v.owner?.name || "Unknown"}
-            </p>
-            <p className="text-sm text-gray-500">Views: {v.views || 0}</p>
-            <div className="mt-2">
-              <button
-                onClick={() => {
-                  setEditVideo(v);
-                  setShowEdit(true);
-                }}
-                className="px-2 py-1 bg-yellow-400 rounded mr-2"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => {
-                  setDeleteVideo(v);
-                  setShowDelete(true);
-                }}
-                className="px-2 py-1 bg-red-500 text-white rounded"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        ))}
+      <div className="bg-white rounded shadow p-4">
+        <table className="w-full table-auto">
+          <thead>
+            <tr className="text-left">
+              <th className="p-2">Thumbnail</th>
+              <th className="p-2">Title</th>
+              <th className="p-2">Owner</th>
+              <th className="p-2">Category</th>
+              <th className="p-2">Views</th>
+              <th className="p-2">Visibility</th>
+              <th className="p-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {videos.map((v) => (
+              <tr key={v._id} className="border-t">
+                <td className="p-2 align-middle">
+                  <img src={v.thumbnail} alt="thumb" className="w-24 h-14 object-cover rounded" />
+                </td>
+                <td className="p-2 align-middle">
+                  <div className="font-semibold">{v.title}</div>
+                  <div className="text-sm text-gray-500">{v.description ? v.description.slice(0, 80) + (v.description.length>80? '...':'') : ''}</div>
+                </td>
+                <td className="p-2 align-middle">{v.owner?.name || 'Unknown'}</td>
+                <td className="p-2 align-middle">{v.category?.name || v.category || '-'}</td>
+                <td className="p-2 align-middle">{v.views || 0}</td>
+                <td className="p-2 align-middle">{v.visibility || 'public'}</td>
+                <td className="p-2 align-middle">
+                  <button onClick={() => { setEditVideo(v); setShowEdit(true); }} className="px-2 py-1 bg-yellow-400 rounded mr-2">Edit</button>
+                  <button onClick={() => { setDeleteVideo(v); setShowDelete(true); }} className="px-2 py-1 bg-red-500 text-white rounded">Delete</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {showAdd && (
         <Modal title="Upload Video" onClose={() => setShowAdd(false)}>
-          <UploadForm
-            categories={categories}
-            onSubmit={handleUpload}
-            onCancel={() => setShowAdd(false)}
-          />
+          <UploadForm categories={categories} onSubmit={handleUpload} onCancel={() => setShowAdd(false)} />
         </Modal>
       )}
 
       {showEdit && editVideo && (
-        <Modal
-          title="Edit Video"
-          onClose={() => {
-            setShowEdit(false);
-            setEditVideo(null);
-          }}
-        >
-          <EditForm
-            initial={editVideo}
-            categories={categories}
-            onSubmit={(payload) => handleUpdate(editVideo._id, payload)}
-            onCancel={() => {
-              setShowEdit(false);
-              setEditVideo(null);
-            }}
-          />
+        <Modal title="Edit Video" onClose={() => { setShowEdit(false); setEditVideo(null); }}>
+          <EditForm initial={editVideo} categories={categories} onSubmit={(payload) => handleUpdate(editVideo._id, payload)} onCancel={() => { setShowEdit(false); setEditVideo(null); }} />
         </Modal>
       )}
 
       {showDelete && deleteVideo && (
-        <ConfirmModal
-          title="Confirm delete"
-          message={`Delete video ${deleteVideo.title}?`}
-          onConfirm={() => handleDelete(deleteVideo._id)}
-          onCancel={() => {
-            setShowDelete(false);
-            setDeleteVideo(null);
-          }}
-        />
+        <ConfirmModal title="Confirm delete" message={`Delete video ${deleteVideo.title}?`} onConfirm={() => handleDelete(deleteVideo._id)} onCancel={() => { setShowDelete(false); setDeleteVideo(null); }} />
       )}
     </div>
   );

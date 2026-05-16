@@ -1,14 +1,7 @@
 In my project all UI part is ready, and its working perfect with dummy data also, now i have to inhance more things in my project to make this more better by adding more features and things.
 
-1.Admin Dashboard =>
+- in backend video model should have a flag for "isShort" which will responsible for check video if its long or short video. during upload video it should be automatically detect if this video is short or long. by default will be long
+- when upload video from admindashboard/app user will upload, detect by length if its short or long video, if length <= 60s, mark this is isShort true otherwise its long video.
+- In App Home screen - show all uploaded videos, right now its showing dummy data, but now show categories and videos from backend uploaded data dynamically. fallbalck is dummy data no issues, but if we have data uploaded it should be show dynamic. so make Homescreen dynamic in my app for category and Videos.
 
-- for admindashboard there is a directory @adminDashboard inside root folder, so admin dashboard all stufss will be there.
-- create my admin js perfect, where header and sidebar will be contains Links with admin nested pages.
-- Admin Dashboard should have pages like - Users Management, Videos Managements, CategoryManagements, where crud operations will be there for all pages. for add/edit open modal form, and delete confirmation modal, manage everything properly like scalable production ready system.
-- User will be login through email and password, and that is not synced with database, that will be defined in .env file gmail and password to login user, so that we dont need to change anything in backend model and controllers, just login direct by taking gmail and password from env file easily.
-- all pages should be nested page for admin dashboard, and use same theme and pattern, user will required to login when open dashboard, email and password.
-- all pages and dashboards all components will follow same color,font,etc same pattern which makes everything better.
-
-- when restart backend , getting some issue that "..validators" not found, so check and fix this too
-
-all UI designs should be perfect, and system shuld be production level scalable system. dont break anything working system , everything should be work perfectly, UIs should be responsive.
+all UI designs and functionalities should be perfect, and system shuld be production level scalable system. dont break anything working system , everything should be work perfectly, UIs should be responsive.
