@@ -1,0 +1,49 @@
+﻿Google Login setup (manual steps)
+
+1) Create OAuth 2.0 credentials on Google Cloud Console:
+   - Go to https://console.cloud.google.com/apis/credentials
+   - Create a new project or select existing.
+   - Configure OAuth consent screen (external or internal as appropriate).
+   - Create Credentials -> OAuth 2.0 Client ID.
+   - For Expo (development): create an OAuth client for 'Web application' and add redirect URI(s):
+       - https://auth.expo.io/@your-expo-username/your-app-slug
+     For native builds, create Android and iOS client IDs as needed.
+
+2) Copy the generated Client ID(s):
+   - For the Expo client use EXPO_PUBLIC_GOOGLE_CLIENT_ID in the mobile app.
+   - For the backend, set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in backend .env.
+
+3) Environment variables to set locally / in production:
+   - Frontend (Expo):
+       EXPO_PUBLIC_API_URL=https://your-api.example.com/api
+       EXPO_PUBLIC_GOOGLE_CLIENT_ID=your-expo-client-id.apps.googleusercontent.com
+     (Add these to app config or CI environment variables.)
+
+   - Backend (.env):
+       MONGODB_URI=your_mongo_connection_string
+       JWT_SECRET=your_jwt_secret
+       JWT_COOKIE_EXPIRE=30
+       CLIENT_URL=https://your-frontend-url
+       GOOGLE_CLIENT_ID=your_backend_client_id.apps.googleusercontent.com
+       GOOGLE_CLIENT_SECRET=your_backend_client_secret
+
+4) Redirect URIs and Authorized origins:
+   - Ensure the OAuth client(s) include any production redirect URIs and authorized JavaScript origins (if using web flows).
+
+5) Testing locally:
+   - Run backend: set .env values and start server (npm run dev or node server).
+   - Run Expo with environment variables (use expo-cli env or app.config.js with secrets) and ensure EXPO_PUBLIC_GOOGLE_CLIENT_ID is available.
+   - Use the app to sign in; the app will exchange Google user info with backend POST /api/auth/google and receive a JWT token.
+
+6) Production notes:
+   - Use HTTPS for all endpoints.
+   - Keep GOOGLE_CLIENT_SECRET only on the backend (do not embed in mobile app).
+   - Rotate secrets periodically and store them in a secrets manager.
+   - Configure OAuth consent verification if publishing widely.
+
+7) After deployment manual checklist:
+   - Add production redirect URIs to Google Cloud Console.
+   - Update environment variables in hosting provider / CI.
+   - Test sign-in end-to-end on real devices.
+
+If you want, provide the app slug and Expo username and backend domain and I can generate exact redirect URIs and a sample .env for you.

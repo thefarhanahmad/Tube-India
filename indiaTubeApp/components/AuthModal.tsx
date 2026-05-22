@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+﻿import React, { useEffect } from "react";
 import {
   View,
   Text,
@@ -10,9 +10,15 @@ import {
 
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
+import Constants from 'expo-constants';
 
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "../constants/Colors";
+
+import { useDispatch } from 'react-redux';
+import { loginStart, loginSuccess, loginFailure } from '../redux/slices/authSlice';
+import { authService, setAuthToken } from '../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -27,10 +33,13 @@ const AuthModal: React.FC<AuthModalProps> = ({
   onClose,
   onLoginSuccess,
 }) => {
+  const dispatch = useDispatch();
+
+  const CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || (Constants.manifest?.extra && (Constants.manifest.extra.EXPO_PUBLIC_GOOGLE_CLIENT_ID || Constants.manifest.extra.EXPO_PUBLIC_GOOGLE_CLIENT_ID)) || '';
+
   const [request, response, promptAsync] =
     Google.useAuthRequest({
-      expoClientId:
-        "117338106850-h4j0vc8vsc5tlubqcgvmc202qtto4fl6.apps.googleusercontent.com",
+      expoClientId: CLIENT_ID,
     });
 
   useEffect(() => {
@@ -59,16 +68,34 @@ const AuthModal: React.FC<AuthModalProps> = ({
 
       const user = await res.json();
 
-      console.log("Google User:", user);
+      // send user to backend to create / authenticate and obtain token
+      dispatch(loginStart());
+      try {
+        const backendRes = await authService.googleLogin({
+          name: user.name,
+          email: user.email,
+          avatar: user.picture || user.avatar || '',
+        });
 
-      Alert.alert(
-        "Login Success",
-        `Welcome ${user.name}`
-      );
+        const token = backendRes.token || backendRes.data?.token;
+        const userData = backendRes.user || backendRes.data?.user || backendRes;
 
-      onLoginSuccess(user);
+        if (token) {
+          await AsyncStorage.setItem('token', token);
+          setAuthToken(token);
+        }
 
-      onClose();
+        dispatch(loginSuccess({ user: userData, token } as any));
+
+        Alert.alert("Login Success", `Welcome ${user.name}`);
+
+        onLoginSuccess(userData);
+        onClose();
+      } catch (err: any) {
+        console.log('Backend login failed', err);
+        dispatch(loginFailure('Backend login failed'));
+        Alert.alert('Login Failed','Unable to complete login with backend');
+      }
     } catch (err) {
       console.log(err);
 
