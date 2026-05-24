@@ -211,12 +211,11 @@ exports.uploadVideo = async (req, res, next) => {
     // Upload video to Cloudinary
     const videoResult = await cloudinary.uploader.upload(req.files.video[0].path, {
       resource_type: 'video',
-      folder: 'indiatube/videos',
-    });
+      folder: 'tubeindia/videos',    });
 
     // Upload thumbnail to Cloudinary
     const thumbnailResult = await cloudinary.uploader.upload(req.files.thumbnail[0].path, {
-      folder: 'indiatube/thumbnails',
+      folder: 'tubeindia/thumbnails',
     });
 
     const durationSec = videoResult.duration || 0;

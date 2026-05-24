@@ -36,7 +36,7 @@ export default function SearchScreen() {
         <View style={styles.searchBar}>
           <TextInput
             style={styles.input}
-            placeholder="Search IndiaTube"
+            placeholder="Search TubeIndia"
             value={query}
             onChangeText={setQuery}
             autoFocus

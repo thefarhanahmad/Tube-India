@@ -1,4 +1,4 @@
-# 🚀 IndiaTube — Full Master Plan
+# 🚀 TubeIndia — Full Master Plan
 
 ## Production-Grade YouTube Clone using Expo React Native + Node.js + MongoDB
 
@@ -6,7 +6,7 @@
 
 # 📌 PROJECT OVERVIEW
 
-Build a scalable production-grade YouTube-like mobile application named **IndiaTube**.
+Build a scalable production-grade YouTube-like mobile application named **TubeIndia**.
 
 The platform should support:
 
@@ -72,7 +72,7 @@ Like YouTube uses:
 Red + White
 ```
 
-IndiaTube should use:
+TubeIndia should use:
 
 ```txt
 Orange + White
@@ -158,7 +158,7 @@ Poppins
 # 📌 PROJECT STRUCTURE
 
 ```txt
-IndiaTube/
+TubeIndia/
 │
 ├── backend/
 │   ├── config/
@@ -830,7 +830,7 @@ Never generate complete app in one response.
 # 🧠 FINAL MASTER INSTRUCTION FOR
 
 ```txt
-You are building a production-grade scalable YouTube clone named IndiaTube.
+You are building a production-grade scalable YouTube clone named TubeIndia.
 
 Frontend:
 - Expo React Native
@@ -880,7 +880,7 @@ Always use scalable production-grade architecture.
 
 Build a scalable mobile-first YouTube-like application called:
 
-# 🇮🇳 IndiaTube
+# 🇮🇳 TubeIndia
 
 Features:
 

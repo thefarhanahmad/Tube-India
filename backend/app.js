@@ -60,7 +60,7 @@ app.use("/api/playlists", playlist);
 
 // Basic route
 app.get("/", (req, res) => {
-  res.json({ message: "Welcome to IndiaTube API" });
+  res.json({ message: "Welcome to TubeIndia API" });
 });
 
 // Error handling middleware

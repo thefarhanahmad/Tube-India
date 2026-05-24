@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "indiaTubeApp",
-    "slug": "indiaTubeApp",
-    "scheme": "indiatube",
+    "name": "tubeIndiaApp",
+    "slug": "tubeIndiaApp",
+    "scheme": "tubeindia",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.jpg",
@@ -18,11 +18,11 @@
     "ios": {
       "supportsTablet": true,
       "icon": "./assets/icon.jpg",
-      "bundleIdentifier": "com.farhan.indiatubeapp"
+      "bundleIdentifier": "com.farhan.tubeindiaapp"
     },
 
     "android": {
-      "package": "com.farhan.indiatubeapp",
+      "package": "com.farhan.tubeindiaapp",
       "icon": "./assets/icon.jpg",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.jpg",
@@ -33,26 +33,30 @@
         "resizeMode": "cover",
         "backgroundColor": "#ffffff"
       },
-
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "usesCleartextTraffic": true
     },
-
     "web": {
       "favicon": "./assets/fevicon.jpg"
     },
-
     "plugins": [
-      "expo-secure-store", 
-      "expo-router", 
+      "expo-secure-store",
+      "expo-router",
       [
         "expo-splash-screen",
         {
           "backgroundColor": "#ffffff",
-          "image": "./assets/splash-icon.jpg"
+          "image": "./assets/splash-icon.jpg",
+          "resizeMode": "cover"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "b8f0dab9-34ff-472b-8693-4bed3ae31861"
+      }
+    }
   }
 }

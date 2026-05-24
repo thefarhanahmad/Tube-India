@@ -74,7 +74,7 @@ exports.updateChannel = async (req, res, next) => {
     if (req.file) {
       console.log('File detected, uploading to Cloudinary...');
       const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: 'indiatube/avatars',
+        folder: 'tubeindia/avatars',
       });
       console.log('Cloudinary upload success:', result.secure_url);
       avatar = result.secure_url;
