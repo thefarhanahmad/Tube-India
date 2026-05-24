@@ -25,6 +25,9 @@ export default function UploadScreen() {
   const [thumbnail, setThumbnail] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [uploading, setUploading] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [visibilityOpen, setVisibilityOpen] = useState(false);
+  const [thumbnailChanged, setThumbnailChanged] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -50,6 +53,9 @@ export default function UploadScreen() {
         setCategory(v.category?._id || v.category);
         setTags(Array.isArray(v.tags) ? v.tags.join(', ') : (v.tags || ''));
         setVisibility(v.visibility || 'public');
+        if (v.thumbnail) {
+          setThumbnail({ uri: v.thumbnail } as ImagePicker.ImagePickerAsset);
+        }
       }
     } catch (err) {
       console.log('Failed to load video details');
@@ -82,7 +88,6 @@ export default function UploadScreen() {
   };
 
   const pickThumbnail = async () => {
-    if (editId) return; // For simplicity, only edit metadata
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
@@ -92,6 +97,7 @@ export default function UploadScreen() {
 
     if (!result.canceled) {
       setThumbnail(result.assets[0]);
+      setThumbnailChanged(true);
     }
   };
 
@@ -157,13 +163,33 @@ export default function UploadScreen() {
   const handleUpdate = async () => {
     setUploading(true);
     try {
-      await api.put(`/videos/${editId}`, {
-        title,
-        description,
-        category,
-        tags,
-        visibility
-      });
+      if (thumbnailChanged && thumbnail) {
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('description', description);
+        formData.append('category', category);
+        formData.append('tags', tags);
+        formData.append('visibility', visibility);
+        // @ts-ignore
+        formData.append('thumbnail', {
+          uri: thumbnail.uri,
+          type: 'image/jpeg',
+          name: 'thumbnail.jpg',
+        });
+        await api.put(`/videos/${editId}`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+      } else {
+        await api.put(`/videos/${editId}`, {
+          title,
+          description,
+          category,
+          tags,
+          visibility
+        });
+      }
       Alert.alert('Success', 'Video updated successfully!');
       router.replace('/your-videos');
     } catch (err: any) {
@@ -224,19 +250,20 @@ export default function UploadScreen() {
             )}
           </TouchableOpacity>
 
-          <Text style={styles.label}>Thumbnail *</Text>
-          <TouchableOpacity style={[styles.picker, styles.thumbnailPicker]} onPress={pickThumbnail}>
-            {thumbnail ? (
-              <Image source={{ uri: thumbnail.uri }} style={styles.thumbnailPreview} />
-            ) : (
-              <>
-                <Ionicons name="image-outline" size={40} color={Colors.textGray} />
-                <Text style={styles.pickerText}>Select Thumbnail</Text>
-              </>
-            )}
-          </TouchableOpacity>
         </>
       )}
+
+      <Text style={styles.label}>{editId ? 'Thumbnail' : 'Thumbnail *'}</Text>
+      <TouchableOpacity style={[styles.picker, styles.thumbnailPicker]} onPress={pickThumbnail}>
+        {thumbnail ? (
+          <Image source={{ uri: thumbnail.uri }} style={styles.thumbnailPreview} />
+        ) : (
+          <>
+            <Ionicons name="image-outline" size={40} color={Colors.textGray} />
+            <Text style={styles.pickerText}>Select Thumbnail</Text>
+          </>
+        )}
+      </TouchableOpacity>
 
       <Text style={styles.label}>Title *</Text>
       <TextInput
@@ -257,20 +284,29 @@ export default function UploadScreen() {
       />
 
       <Text style={styles.label}>Category *</Text>
-      <View style={styles.categoryContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {categories.map((c) => (
-            <TouchableOpacity 
-              key={c._id} 
-              style={[styles.categoryBtn, category === c._id && styles.categoryBtnActive]}
-              onPress={() => setCategory(c._id)}
-            >
-              <Text style={[styles.categoryBtnText, category === c._id && styles.categoryBtnTextActive]}>
-                {c.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+      <View style={styles.selectContainer}>
+        <TouchableOpacity style={styles.selectTrigger} onPress={() => setCategoryOpen(!categoryOpen)}>
+          <Text style={styles.selectValue}>
+            {categories.find((c) => c._id === category)?.name || 'Select category'}
+          </Text>
+          <Ionicons name={categoryOpen ? 'chevron-up' : 'chevron-down'} size={18} color={Colors.textGray} />
+        </TouchableOpacity>
+        {categoryOpen && (
+          <View style={styles.selectMenu}>
+            {categories.map((c) => (
+              <TouchableOpacity
+                key={c._id}
+                style={styles.selectOption}
+                onPress={() => {
+                  setCategory(c._id);
+                  setCategoryOpen(false);
+                }}
+              >
+                <Text style={[styles.selectOptionText, category === c._id && styles.selectOptionTextActive]}>{c.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
 
       <Text style={styles.label}>Tags (comma separated)</Text>
@@ -282,18 +318,27 @@ export default function UploadScreen() {
       />
 
       <Text style={styles.label}>Visibility</Text>
-      <View style={styles.visibilityContainer}>
-        {['public', 'private'].map((v) => (
-          <TouchableOpacity 
-            key={v} 
-            style={[styles.visibilityBtn, visibility === v && styles.visibilityBtnActive]}
-            onPress={() => setVisibility(v)}
-          >
-            <Text style={[styles.visibilityBtnText, visibility === v && styles.visibilityBtnTextActive]}>
-              {v.toUpperCase()}
-            </Text>
-          </TouchableOpacity>
-        ))}
+      <View style={styles.selectContainer}>
+        <TouchableOpacity style={styles.selectTrigger} onPress={() => setVisibilityOpen(!visibilityOpen)}>
+          <Text style={styles.selectValue}>{visibility === 'private' ? 'Private' : 'Public'}</Text>
+          <Ionicons name={visibilityOpen ? 'chevron-up' : 'chevron-down'} size={18} color={Colors.textGray} />
+        </TouchableOpacity>
+        {visibilityOpen && (
+          <View style={styles.selectMenu}>
+            {['public', 'private'].map((v) => (
+              <TouchableOpacity
+                key={v}
+                style={styles.selectOption}
+                onPress={() => {
+                  setVisibility(v);
+                  setVisibilityOpen(false);
+                }}
+              >
+                <Text style={[styles.selectOptionText, visibility === v && styles.selectOptionTextActive]}>{v.toUpperCase()}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
 
       <TouchableOpacity 
@@ -417,51 +462,42 @@ const styles = StyleSheet.create({
     height: 100,
     textAlignVertical: 'top',
   },
-  categoryContainer: {
-    flexDirection: 'row',
-    marginBottom: 10,
+  selectContainer: {
+    marginBottom: 6,
   },
-  categoryBtn: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    marginRight: 10,
-  },
-  categoryBtnActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  categoryBtnText: {
-    color: Colors.text,
-  },
-  categoryBtnTextActive: {
-    color: Colors.white,
-    fontWeight: 'bold',
-  },
-  visibilityContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  visibilityBtn: {
-    flex: 0.48,
+  selectTrigger: {
     borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: 8,
-    paddingVertical: 12,
+    minHeight: 48,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  visibilityBtnActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  visibilityBtnText: {
-    fontWeight: 'bold',
+  selectValue: {
     color: Colors.text,
   },
-  visibilityBtnTextActive: {
-    color: Colors.white,
+  selectMenu: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 8,
+    marginTop: 6,
+    overflow: 'hidden',
+    backgroundColor: Colors.white,
+  },
+  selectOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  selectOptionText: {
+    color: Colors.text,
+  },
+  selectOptionTextActive: {
+    color: Colors.primary,
+    fontWeight: 'bold',
   },
   uploadButton: {
     backgroundColor: Colors.primary,

@@ -259,10 +259,19 @@ exports.updateVideo = async (req, res, next) => {
     }
 
     const { title, description, category, tags, visibility } = req.body;
-    
-    video = await Video.findByIdAndUpdate(req.params.id, {
-      title, description, category, tags, visibility
-    }, {
+    const updates = { title, description, category, tags, visibility };
+
+    if (req.files && req.files.thumbnail && req.files.thumbnail[0]) {
+      const thumbnailResult = await cloudinary.uploader.upload(req.files.thumbnail[0].path, {
+        folder: 'tubeindia/thumbnails',
+      });
+      updates.thumbnail = thumbnailResult.secure_url;
+      if (video.thumbnail) {
+        await deleteFromCloudinary(video.thumbnail, 'image');
+      }
+    }
+
+    video = await Video.findByIdAndUpdate(req.params.id, updates, {
       new: true,
       runValidators: true,
     });

@@ -35,6 +35,6 @@ router.post('/upload', protect, upload.fields([
 
 router.route('/:id')
   .get(softProtect, getVideo)
-  .put(protect, updateVideo)
+  .put(protect, upload.fields([{ name: 'thumbnail', maxCount: 1 }]), updateVideo)
   .delete(protect, deleteVideo);
 module.exports = router;
