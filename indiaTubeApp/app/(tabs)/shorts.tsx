@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, FlatList, Image, Dimensions, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Video, ResizeMode } from 'expo-av';
+import { useIsFocused } from '@react-navigation/native';
 import Colors from '../../constants/Colors';
 import { videoService } from '../../services/api';
 import api from '../../services/api';
@@ -15,11 +17,13 @@ const { height, width } = Dimensions.get('window');
 
 export default function ShortsScreen() {
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+  const isFocused = useIsFocused();
   const [shorts, setShorts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [authModalVisible, setAuthModalVisible] = useState(false);
   const [selectedShortId, setSelectedShortId] = useState<string | null>(null);
   const [commentModalVisible, setCommentModalVisible] = useState(false);
+  const [activeVideoIndex, setActiveVideoIndex] = useState(0);
 
   useEffect(() => {
     loadShorts();
@@ -115,6 +119,16 @@ export default function ShortsScreen() {
     setCommentModalVisible(true);
   };
 
+  const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
+    if (viewableItems.length > 0) {
+      setActiveVideoIndex(viewableItems[0].index);
+    }
+  }).current;
+
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 50
+  }).current;
+
   if (loading) return (
     <View style={[styles.container, styles.centerContainer]}>
       <ActivityIndicator size="large" color={Colors.primary} />
@@ -154,9 +168,20 @@ export default function ShortsScreen() {
         pagingEnabled
         vertical
         showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
+        renderItem={({ item, index }) => (
           <View style={styles.shortItem}>
-            <Image source={{ uri: item.thumbnail }} style={styles.fullThumbnail} />
+            <Video
+              source={{ uri: item.videoUrl }}
+              style={styles.fullVideo}
+              resizeMode={ResizeMode.COVER}
+              shouldPlay={isFocused && activeVideoIndex === index}
+              isLooping
+              isMuted={false}
+              posterSource={{ uri: item.thumbnail }}
+              usePoster
+            />
             <View style={styles.overlay}>
               <View style={styles.rightActions}>
                 <TouchableOpacity style={styles.actionButton} onPress={() => handleLike(item._id)}>
@@ -176,14 +201,14 @@ export default function ShortsScreen() {
               <View style={styles.bottomDetails}>
                 <View style={styles.ownerRow}>
                   <Image source={{ uri: item.owner?.avatar || FALLBACK_AVATAR }} style={styles.ownerAvatar} />
-                  <Text style={styles.ownerName}>@{item.owner.channelName || item.owner.name}</Text>
+                  <Text style={styles.ownerName} numberOfLines={1}>@{item.owner.channelName || item.owner.name}</Text>
                   {item.owner._id !== user?._id && (
                     <TouchableOpacity 
                       style={[styles.followBtn, item.isFollowing && styles.followedBtn]} 
                       onPress={() => handleFollow(item.owner._id)}
                     >
                       <Text style={[styles.followBtnText, item.isFollowing && styles.followedBtnText]}>
-                        {item.isFollowing ? 'Followed' : 'Follow'}
+                        {item.isFollowing ? 'Unfollow' : 'Follow'}
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -212,14 +237,13 @@ const styles = StyleSheet.create({
     height: height - 120, // Adjust for bottom tabs
     position: 'relative',
   },
-  fullThumbnail: {
+  fullVideo: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    backgroundColor: 'rgba(0,0,0,0.1)',
     justifyContent: 'flex-end',
     padding: 20,
   },
@@ -259,19 +283,30 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontWeight: 'bold',
     marginLeft: 10,
-    fontSize: 16,
+    fontSize: 14,
+    flex: 1,
   },
   followBtn: {
     backgroundColor: Colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 4,
+    borderRadius: 20,
     marginLeft: 15,
+    minWidth: 70,
+    alignItems: 'center',
+  },
+  followedBtn: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#FF8C00', // Orange border
   },
   followBtnText: {
     color: Colors.white,
     fontWeight: 'bold',
-    fontSize: 12,
+    fontSize: 11,
+  },
+  followedBtnText: {
+    color: '#FF8C00', // Orange text
   },
   shortTitle: {
     color: Colors.white,

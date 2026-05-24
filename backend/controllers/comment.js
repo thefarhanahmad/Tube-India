@@ -64,7 +64,7 @@ exports.deleteComment = async (req, res, next) => {
 
     if (
       comment.user.toString() !== req.user.id &&
-      video.owner.toString() !== req.user.id &&
+      (!video || video.owner.toString() !== req.user.id) &&
       req.user.role !== 'admin'
     ) {
       return res.status(401).json({ success: false, message: 'Not authorized to delete this comment' });
@@ -73,8 +73,10 @@ exports.deleteComment = async (req, res, next) => {
     await comment.deleteOne();
 
     // Decrement commentsCount in Video model
-    video.commentsCount -= 1;
-    await video.save();
+    if (video) {
+      video.commentsCount = Math.max(0, video.commentsCount - 1);
+      await video.save();
+    }
 
     res.status(200).json({
       success: true,

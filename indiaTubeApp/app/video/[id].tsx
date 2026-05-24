@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSelector } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
-import { Video, ResizeMode } from 'expo-av';
+import { Video, ResizeMode, VideoFullscreenUpdate } from 'expo-av';
+import * as ScreenOrientation from 'expo-screen-orientation';
 import Colors from '../../constants/Colors';
 import { RootState } from '../../redux/store';
 import api, { videoService } from '../../services/api';
@@ -206,6 +207,14 @@ export default function VideoScreen() {
     }
   };
 
+  const handleFullscreenUpdate = async (event: { fullscreenUpdate: VideoFullscreenUpdate }) => {
+    if (event.fullscreenUpdate === VideoFullscreenUpdate.PLAYER_WILL_PRESENT) {
+      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+    } else if (event.fullscreenUpdate === VideoFullscreenUpdate.PLAYER_WILL_DISMISS) {
+      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    }
+  };
+
   const handleAdd = () => {
     if (!isAuthenticated) {
       setAuthModalVisible(true);
@@ -241,6 +250,7 @@ export default function VideoScreen() {
         shouldPlay
         useNativeControls
         style={styles.videoPlayer}
+        onFullscreenUpdate={handleFullscreenUpdate}
       />
 
       <FlatList
@@ -283,8 +293,8 @@ export default function VideoScreen() {
             <View style={styles.channelContainer}>
               <View style={styles.channelInfo}>
                 <Image source={{ uri: video?.owner?.avatar || FALLBACK_IMAGE }} style={styles.avatar} />
-                <View>
-                  <Text style={styles.channelName}>{video?.owner?.channelName || video?.owner?.name || 'Unknown channel'}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.channelName} numberOfLines={1}>{video?.owner?.channelName || video?.owner?.name || 'Unknown channel'}</Text>
                   <Text style={styles.followerCount}>{video?.owner?.followersCount || 0} followers</Text>
                 </View>
               </View>
@@ -294,7 +304,7 @@ export default function VideoScreen() {
                   onPress={handleFollow}
                 >
                   <Text style={[styles.followText, isFollowed && styles.followedText]}>
-                    {isFollowed ? 'FOLLOWED' : 'FOLLOW'}
+                    {isFollowed ? 'UNFOLLOW' : 'FOLLOW'}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -399,38 +409,46 @@ const styles = StyleSheet.create({
   channelInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    marginRight: 10,
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: 10,
     backgroundColor: '#E5E7EB',
   },
   channelName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: Colors.text,
   },
   followerCount: {
-    fontSize: 12,
+    fontSize: 11,
     color: Colors.textGray,
   },
   followButton: {
     backgroundColor: Colors.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    minWidth: 80,
+    alignItems: 'center',
   },
   followedButton: {
-    backgroundColor: '#F2F2F2',
+    backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: '#FF8C00', // Orange border
   },
   followText: {
     color: Colors.white,
     fontWeight: 'bold',
+    fontSize: 12,
   },
   followedText: {
-    color: Colors.textGray,
+    color: '#FF8C00', // Orange text
+    fontSize: 11,
   },
   descriptionContainer: {
     marginBottom: 16,

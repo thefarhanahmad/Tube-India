@@ -46,9 +46,9 @@ exports.getVideos = async (req, res, next) => {
       const user = await User.findById(req.user.id);
       results = results.map(v => ({
         ...v,
-        isLiked: v.likes.some(id => id.toString() === req.user.id.toString()),
-        isDisliked: v.dislikes.some(id => id.toString() === req.user.id.toString()),
-        isFollowing: user.followingChannels.some(id => id.toString() === v.owner._id.toString())
+        isLiked: v.likes ? v.likes.some(id => id.toString() === req.user.id.toString()) : false,
+        isDisliked: v.dislikes ? v.dislikes.some(id => id.toString() === req.user.id.toString()) : false,
+        isFollowing: (user && user.followingChannels && v.owner) ? user.followingChannels.some(id => id.toString() === v.owner._id.toString()) : false
       }));
     }
 
@@ -80,9 +80,9 @@ exports.getVideo = async (req, res, next) => {
     let videoData = video.toObject();
     if (req.user) {
       const user = await User.findById(req.user.id);
-      videoData.isLiked = video.likes.some(id => id.toString() === req.user.id.toString());
-      videoData.isDisliked = video.dislikes.some(id => id.toString() === req.user.id.toString());
-      videoData.isFollowing = user.followingChannels.some(id => id.toString() === video.owner._id.toString());
+      videoData.isLiked = video.likes ? video.likes.some(id => id.toString() === req.user.id.toString()) : false;
+      videoData.isDisliked = video.dislikes ? video.dislikes.some(id => id.toString() === req.user.id.toString()) : false;
+      videoData.isFollowing = (user && user.followingChannels && video.owner) ? user.followingChannels.some(id => id.toString() === video.owner._id.toString()) : false;
     }
 
     res.status(200).json({
