@@ -1,6 +1,6 @@
 import { Tabs, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, Image } from 'react-native';
 import Colors from '../../constants/Colors';
 
 export default function TabsLayout() {
@@ -27,12 +27,14 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: 'Home',
-          headerTitle: 'IndiaTube',
-          headerTitleStyle: {
-            color: Colors.primary,
-            fontSize: 22,
-            fontWeight: 'bold',
-          },
+          headerTitle: () => (
+            <Image 
+              source={require('../../assets/app-logo.jpeg')} 
+              style={{ width: 120, height: 40 }}
+              resizeMode="contain"
+            />
+          ),
+          headerTitleAlign: 'left',
           headerRight: () => (
             <TouchableOpacity 
               style={{ marginRight: 15 }} 

@@ -2,6 +2,7 @@ const Video = require('../models/Video');
 const User = require('../models/User');
 const Follower = require('../models/Follower');
 const cloudinary = require('cloudinary').v2;
+const { deleteFromCloudinary } = require('../utils/cloudinary');
 
 // @desc    Search videos
 // @route   GET /api/videos/search
@@ -290,6 +291,14 @@ exports.deleteVideo = async (req, res, next) => {
     // Make sure user is video owner
     if (video.owner.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(401).json({ success: false, message: 'Not authorized to delete this video' });
+    }
+
+    // Delete from Cloudinary
+    if (video.videoUrl) {
+      await deleteFromCloudinary(video.videoUrl, 'video');
+    }
+    if (video.thumbnail) {
+      await deleteFromCloudinary(video.thumbnail, 'image');
     }
 
     await video.deleteOne();

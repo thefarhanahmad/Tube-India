@@ -5,25 +5,27 @@
     "scheme": "indiatube",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/app-icon.jpeg",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
 
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/splash-screen.jpeg",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
 
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "icon": "./assets/app-icon.jpeg",
+      "bundleIdentifier": "com.farhan.indiatubeapp"
     },
 
     "android": {
       "package": "com.farhan.indiatubeapp",
-
+      "icon": "./assets/app-icon.jpeg",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/app-icon.jpeg",
         "backgroundColor": "#ffffff"
       },
 
@@ -33,7 +35,7 @@
     },
 
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/app-icon.jpeg"
     },
 
     "plugins": ["expo-secure-store", "expo-router"]

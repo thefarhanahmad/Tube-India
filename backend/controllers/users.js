@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const { deleteFromCloudinary } = require('../utils/cloudinary');
 
 // @desc Create user
 // @route POST /api/users
@@ -122,6 +123,11 @@ exports.deleteUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    // Delete avatar from Cloudinary
+    if (user.avatar) {
+      await deleteFromCloudinary(user.avatar, 'image');
+    }
+
     await user.deleteOne();
     res.status(200).json({ success: true, data: {} });
   } catch (err) {
