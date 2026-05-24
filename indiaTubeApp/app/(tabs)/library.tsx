@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Image, ActivityIndicator, Alert } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Image, ActivityIndicator, Alert, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Colors from '../../constants/Colors';
 import { useSelector, useDispatch } from 'react-redux';
@@ -7,8 +7,23 @@ import { RootState } from '../../redux/store';
 import { logout } from '../../redux/slices/authSlice';
 import AuthModal from '../../components/AuthModal';
 import api, { setAuthToken } from '../../services/api';
-import { useRouter, useNavigation } from 'expo-router';
+import { useRouter, useNavigation, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+const getAvatarUri = (avatar?: string) => {
+  if (!avatar) return null;
+  const value = avatar.trim();
+  if (!value || value === 'default-avatar.png') return null;
+  if (
+    value.startsWith('http://') ||
+    value.startsWith('https://') ||
+    value.startsWith('file://') ||
+    value.startsWith('content://') ||
+    value.startsWith('data:image/')
+  ) {
+    return value;
+  }
+  return null;
+};
 
 export default function LibraryScreen() {
   const router = useRouter();
@@ -21,6 +36,20 @@ export default function LibraryScreen() {
   const [myVideos, setMyVideos] = useState<any[]>([]);
   const [loadingMyVideos, setLoadingMyVideos] = useState(false);
   const [playlists, setPlaylists] = useState<any[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!authLoading) {
+        if (isAuthenticated) {
+          loadAllData();
+          setAuthModalVisible(false);
+        } else {
+          setAuthModalVisible(true);
+        }
+      }
+    }, [isAuthenticated, authLoading])
+  );
 
   useEffect(() => {
     navigation.setOptions({
@@ -32,25 +61,12 @@ export default function LibraryScreen() {
     });
   }, [navigation, isAuthenticated]);
 
-  useEffect(() => {
-    if (!authLoading) {
-      if (isAuthenticated) {
-        loadHistory();
-        loadMyVideos();
-        loadPlaylists();
-        setAuthModalVisible(false);
-      } else {
-        setAuthModalVisible(true);
-      }
-    }
-  }, [isAuthenticated, authLoading]);
-
   const loadHistory = async () => {
     setLoadingHistory(true);
     try {
       const res = await api.get('/users/history');
       if (res.data.success) {
-        setHistory(res.data.data);
+        setHistory(res.data.data || []);
       }
     } catch (err) {
       console.error('Failed to load history', err);
@@ -64,10 +80,10 @@ export default function LibraryScreen() {
     try {
       const res = await api.get('/videos/me');
       if (res.data.success) {
-        setMyVideos(res.data.data);
+        setMyVideos(res.data.data || []);
       }
     } catch (err) {
-      console.error('Failed to load my videos', err);
+      console.error('Failed to load your videos', err);
     } finally {
       setLoadingMyVideos(false);
     }
@@ -77,9 +93,27 @@ export default function LibraryScreen() {
     try {
       const res = await api.get('/playlists');
       if (res.data.success) {
-        setPlaylists(res.data.data);
+        setPlaylists(res.data.data || []);
       }
-    } catch (err) {}
+    } catch (err) {
+      console.error('Failed to load playlists', err);
+    }
+  };
+
+  const loadAllData = async () => {
+    loadHistory();
+    loadMyVideos();
+    loadPlaylists();
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([
+      loadHistory(),
+      loadMyVideos(),
+      loadPlaylists()
+    ]);
+    setRefreshing(false);
   };
 
   const handleLogout = () => {
@@ -119,13 +153,24 @@ export default function LibraryScreen() {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView 
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.primary]} />
+      }
+    >
       <AuthModal visible={authModalVisible} onClose={() => setAuthModalVisible(false)} />
       
       {/* Profile Header */}
       <View style={styles.profileHeader}>
         <View style={styles.profileRow}>
-          <Image source={{ uri: user?.avatar }} style={styles.avatar} />
+          {getAvatarUri(user?.avatar) ? (
+            <Image source={{ uri: getAvatarUri(user?.avatar)! }} style={styles.avatar} />
+          ) : (
+            <View style={[styles.avatar, styles.avatarFallback]}>
+              <Ionicons name="person" size={30} color={Colors.textGray} />
+            </View>
+          )}
           <View style={styles.profileInfo}>
             <Text style={styles.profileName}>{user?.name}</Text>
             <Text style={styles.profileEmail}>{user?.email || user?.phone}</Text>
@@ -276,6 +321,10 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     backgroundColor: '#E5E7EB',
+  },
+  avatarFallback: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   profileInfo: {
     flex: 1,

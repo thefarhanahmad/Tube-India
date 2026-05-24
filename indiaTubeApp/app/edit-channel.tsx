@@ -8,15 +8,31 @@ import Colors from '../constants/Colors';
 import api from '../services/api';
 import { RootState } from '../redux/store';
 import { loginSuccess } from '../redux/slices/authSlice';
+const getAvatarUri = (avatar?: string) => {
+  if (!avatar) return null;
+  const value = avatar.trim();
+  if (!value || value === 'default-avatar.png') return null;
+  if (
+    value.startsWith('http://') ||
+    value.startsWith('https://') ||
+    value.startsWith('file://') ||
+    value.startsWith('content://') ||
+    value.startsWith('data:image/')
+  ) {
+    return value;
+  }
+  return null;
+};
 
 export default function EditChannelScreen() {
   const { user, token } = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch();
   const router = useRouter();
+  const isCreateMode = !user?.channelName;
 
-  const [channelName, setChannelName] = useState(user?.channelName || user?.name || '');
+  const [channelName, setChannelName] = useState(user?.channelName || '');
   const [about, setAbout] = useState(user?.about || '');
-  const [avatar, setAvatar] = useState(user?.avatar || '');
+  const [avatar, setAvatar] = useState(user?.channelName ? (user?.avatar || '') : '');
   const [loading, setLoading] = useState(false);
 
   const pickImage = async () => {
@@ -46,14 +62,17 @@ export default function EditChannelScreen() {
       formData.append('channelName', channelName);
       formData.append('about', about);
       
-      if (avatar && !avatar.startsWith('http')) {
+      const isLocalAvatar = avatar?.startsWith('file://') || avatar?.startsWith('content://');
+      const isRemoteAvatar = avatar?.startsWith('http://') || avatar?.startsWith('https://');
+
+      if (isLocalAvatar) {
         // @ts-ignore
         formData.append('avatar', {
           uri: avatar,
           type: 'image/jpeg',
           name: 'avatar.jpg',
         });
-      } else if (avatar) {
+      } else if (isRemoteAvatar) {
         formData.append('avatar', avatar);
       }
 
@@ -70,7 +89,18 @@ export default function EditChannelScreen() {
         router.back();
       }
     } catch (err: any) {
-      Alert.alert('Error', err.response?.data?.message || 'Failed to update channel');
+      const statusCode = err?.response?.status;
+      const apiMessage =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.response?.data?.errors?.[0]?.msg;
+      const fallbackMessage =
+        statusCode === 400
+          ? 'Please check channel details and try again.'
+          : statusCode === 401
+          ? 'Your session expired. Please login again.'
+          : 'Channel update failed. You can update channel name/about without uploading an avatar.';
+      Alert.alert('Update Failed', apiMessage || fallbackMessage);
     } finally {
       setLoading(false);
     }
@@ -82,13 +112,19 @@ export default function EditChannelScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color={Colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Channel</Text>
+        <Text style={styles.headerTitle}>{isCreateMode ? 'Create Channel' : 'Edit Channel'}</Text>
         <View style={{ width: 24 }} />
       </View>
 
       <View style={styles.avatarSection}>
         <TouchableOpacity onPress={pickImage}>
-          <Image source={{ uri: avatar || 'https://via.placeholder.com/150' }} style={styles.avatar} />
+          {getAvatarUri(avatar) ? (
+            <Image source={{ uri: getAvatarUri(avatar)! }} style={styles.avatar} />
+          ) : (
+            <View style={[styles.avatar, styles.avatarFallback]}>
+              <Ionicons name="person" size={48} color={Colors.textGray} />
+            </View>
+          )}
           <View style={styles.cameraIcon}>
             <Ionicons name="camera" size={20} color={Colors.white} />
           </View>
@@ -100,6 +136,7 @@ export default function EditChannelScreen() {
       <TextInput
         style={styles.input}
         placeholder="Enter channel name"
+        placeholderTextColor={Colors.textGray}
         value={channelName}
         onChangeText={setChannelName}
       />
@@ -108,6 +145,7 @@ export default function EditChannelScreen() {
       <TextInput
         style={[styles.input, styles.textArea]}
         placeholder="Tell viewers about your channel"
+        placeholderTextColor={Colors.textGray}
         multiline
         numberOfLines={4}
         value={about}
@@ -158,6 +196,10 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 50,
     backgroundColor: '#E5E7EB',
+  },
+  avatarFallback: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cameraIcon: {
     position: 'absolute',

@@ -9,6 +9,7 @@ import { RootState } from '../../redux/store';
 import AuthModal from '../../components/AuthModal';
 import CommentList from '../../components/CommentList';
 import { Modal } from 'react-native';
+const FALLBACK_AVATAR = 'https://via.placeholder.com/80x80.png?text=User';
 
 const { height, width } = Dimensions.get('window');
 
@@ -43,8 +44,17 @@ export default function ShortsScreen() {
         commentsCount: v.commentsCount || 0,
         isLiked: v.isLiked ?? (isAuthenticated && v.likes?.includes(user?._id)),
         isFollowing: v.isFollowing || false,
+        createdAt: v.createdAt,
       }));
-      setShorts(onlyShorts);
+      const orderedShorts = [...onlyShorts].sort((a: any, b: any) => {
+        const aFollowing = a?.isFollowing ? 1 : 0;
+        const bFollowing = b?.isFollowing ? 1 : 0;
+        if (aFollowing !== bFollowing) return bFollowing - aFollowing;
+        const aTime = new Date(a?.createdAt || 0).getTime();
+        const bTime = new Date(b?.createdAt || 0).getTime();
+        return bTime - aTime;
+      });
+      setShorts(orderedShorts);
     } catch (e) {
       console.log('Failed to load shorts', e);
     }
@@ -165,7 +175,7 @@ export default function ShortsScreen() {
 
               <View style={styles.bottomDetails}>
                 <View style={styles.ownerRow}>
-                  <Image source={{ uri: item.owner.avatar }} style={styles.ownerAvatar} />
+                  <Image source={{ uri: item.owner?.avatar || FALLBACK_AVATAR }} style={styles.ownerAvatar} />
                   <Text style={styles.ownerName}>@{item.owner.channelName || item.owner.name}</Text>
                   {item.owner._id !== user?._id && (
                     <TouchableOpacity 

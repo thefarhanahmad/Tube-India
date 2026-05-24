@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, FlatList, StyleSheet, ActivityIndicator, Text } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
+import { useFocusEffect } from 'expo-router';
 import Colors from '../../constants/Colors';
 import VideoCard from '../../components/VideoCard';
 import CategoryList from '../../components/CategoryList';
@@ -60,10 +61,12 @@ export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [categoriesList, setCategoriesList] = useState<string[]>(['All']);
 
-  useEffect(() => {
-    loadVideos();
-    loadCategories();
-  }, [isAuthenticated]);
+  useFocusEffect(
+    useCallback(() => {
+      loadVideos();
+      loadCategories();
+    }, [isAuthenticated])
+  );
 
   const loadVideos = async () => {
     try {
@@ -77,7 +80,15 @@ export default function HomeScreen() {
           ...v,
           category: v.category && (v.category.name || v.category),
         }));
-        dispatch(fetchVideosSuccess(normalized));
+        const ordered = [...normalized].sort((a: any, b: any) => {
+          const aFollowing = a?.isFollowing ? 1 : 0;
+          const bFollowing = b?.isFollowing ? 1 : 0;
+          if (aFollowing !== bFollowing) return bFollowing - aFollowing;
+          const aTime = new Date(a?.createdAt || 0).getTime();
+          const bTime = new Date(b?.createdAt || 0).getTime();
+          return bTime - aTime;
+        });
+        dispatch(fetchVideosSuccess(ordered));
       } else {
         // Fallback to sample data if API returns empty
         dispatch(fetchVideosSuccess(SAMPLE_VIDEOS));

@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema({
   },
   avatar: {
     type: String,
-    default: 'default-avatar.png',
+    default: null,
   },
   phone: {
     type: String,

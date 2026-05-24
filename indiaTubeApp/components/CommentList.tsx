@@ -6,6 +6,7 @@ import api from '../services/api';
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
 import { formatTimeAgo } from '../utils/formatDate';
+const FALLBACK_AVATAR = 'https://via.placeholder.com/80x80.png?text=User';
 
 interface CommentListProps {
   videoId: string;
@@ -108,7 +109,7 @@ const CommentList: React.FC<CommentListProps> = ({ videoId, onCommentAdded, isAu
 
       {comments.map((item) => (
         <View key={item._id} style={styles.commentItem}>
-          <Image source={{ uri: item.user.avatar }} style={styles.avatar} />
+          <Image source={{ uri: item.user?.avatar || FALLBACK_AVATAR }} style={styles.avatar} />
           <View style={styles.commentContent}>
             <View style={styles.commentHeader}>
               <Text style={styles.username}>{item.user.channelName || item.user.name}</Text>

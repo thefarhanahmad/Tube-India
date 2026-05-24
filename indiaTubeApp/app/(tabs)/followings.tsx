@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, Image, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import Colors from '../../constants/Colors';
 import VideoCard from '../../components/VideoCard';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import api from '../../services/api';
 import AuthModal from '../../components/AuthModal';
+const FALLBACK_AVATAR = 'https://via.placeholder.com/80x80.png?text=User';
 
 export default function FollowingsScreen() {
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
@@ -14,13 +16,15 @@ export default function FollowingsScreen() {
   const [loading, setLoading] = useState(false);
   const [authModalVisible, setAuthModalVisible] = useState(false);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadFollowings();
-    } else {
-      setAuthModalVisible(true);
-    }
-  }, [isAuthenticated]);
+  useFocusEffect(
+    useCallback(() => {
+      if (isAuthenticated) {
+        loadFollowings();
+      } else {
+        setAuthModalVisible(true);
+      }
+    }, [isAuthenticated])
+  );
 
   const loadFollowings = async () => {
     setLoading(true);
@@ -62,7 +66,7 @@ export default function FollowingsScreen() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {followings.map(item => (
             <TouchableOpacity key={item._id} style={styles.channelItem}>
-              <Image source={{ uri: item.channel.avatar }} style={styles.channelAvatar} />
+              <Image source={{ uri: item.channel?.avatar || FALLBACK_AVATAR }} style={styles.channelAvatar} />
               <Text style={styles.channelName} numberOfLines={1}>{item.channel.channelName || item.channel.name}</Text>
             </TouchableOpacity>
           ))}

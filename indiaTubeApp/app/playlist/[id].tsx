@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import Colors from '../../constants/Colors';
 import VideoCard from '../../components/VideoCard';
 import api from '../../services/api';
@@ -12,15 +12,15 @@ export default function PlaylistDetailsScreen() {
   const [videos, setVideos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadPlaylistVideos();
-  }, [id]);
+  useFocusEffect(
+    useCallback(() => {
+      loadPlaylistVideos();
+    }, [id])
+  );
 
   const loadPlaylistVideos = async () => {
     setLoading(true);
     try {
-      // In a real app, we might have a dedicated GET /api/playlists/:id
-      // For now we fetch all and find this one, or assume the backend supports it.
       const res = await api.get('/playlists');
       if (res.data.success) {
         const playlist = res.data.data.find((p: any) => p._id === id);
@@ -45,7 +45,7 @@ export default function PlaylistDetailsScreen() {
         <View style={{ width: 24 }} />
       </View>
 
-      {loading ? (
+      {loading && videos.length === 0 ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={Colors.primary} />
         </View>
@@ -55,6 +55,8 @@ export default function PlaylistDetailsScreen() {
           keyExtractor={(item) => item._id}
           renderItem={({ item }) => <VideoCard video={item} />}
           contentContainerStyle={styles.list}
+          refreshing={loading}
+          onRefresh={loadPlaylistVideos}
           ListEmptyComponent={
             <View style={styles.center}>
               <Text style={styles.emptyText}>No videos in this playlist</Text>

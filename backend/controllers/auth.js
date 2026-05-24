@@ -1,4 +1,10 @@
 const User = require('../models/User');
+const normalizeAvatar = (avatar) => {
+  if (!avatar || typeof avatar !== 'string') return null;
+  const value = avatar.trim();
+  if (!value || value === 'default-avatar.png') return null;
+  return value;
+};
 
 exports.signupWithPhone = async (req, res, next) => {
   try {
@@ -40,7 +46,7 @@ exports.googleLogin = async (req, res, next) => {
       user = await User.create({
         name,
         email,
-        avatar,
+        avatar: normalizeAvatar(avatar),
         authProvider: 'google',
       });
     } else if (!user.authProvider) {
@@ -63,7 +69,7 @@ exports.updateChannel = async (req, res, next) => {
   try {
     console.log('Update Channel request received:', req.body);
     const { channelName, about } = req.body;
-    let avatar = req.body.avatar;
+    let avatar = normalizeAvatar(req.body.avatar);
 
     if (req.file) {
       console.log('File detected, uploading to Cloudinary...');
@@ -131,7 +137,7 @@ const sendTokenResponse = (user, statusCode, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        avatar: user.avatar,
+        avatar: normalizeAvatar(user.avatar),
         role: user.role,
         phone: user.phone,
         channelName: user.channelName,

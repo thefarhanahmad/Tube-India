@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { formatTimeAgo } from '../utils/formatDate';
 
 const FALLBACK_IMAGE = 'https://via.placeholder.com/640x360?text=No+Image';
+const FALLBACK_AVATAR = 'https://via.placeholder.com/80x80.png?text=User';
 
 interface VideoCardProps {
   video: {
@@ -53,7 +54,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onMenuPress }) => {
       </View>
 
       <View style={styles.detailsContainer}>
-        <Image source={{ uri: video?.owner?.avatar || FALLBACK_IMAGE }} style={styles.avatar} />
+        <Image source={{ uri: video?.owner?.avatar || FALLBACK_AVATAR }} style={styles.avatar} />
         <View style={styles.textContainer}>
           <Text style={styles.title} numberOfLines={2}>
             {video?.title || 'Untitled'}

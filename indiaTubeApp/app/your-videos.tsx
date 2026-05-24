@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, Modal, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import Colors from '../constants/Colors';
 import VideoCard from '../components/VideoCard';
 import api from '../services/api';
@@ -13,9 +13,11 @@ export default function YourVideosScreen() {
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
   const [menuVisible, setMenuVisible] = useState(false);
 
-  useEffect(() => {
-    loadMyVideos();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadMyVideos();
+    }, [])
+  );
 
   const loadMyVideos = async () => {
     setLoading(true);
