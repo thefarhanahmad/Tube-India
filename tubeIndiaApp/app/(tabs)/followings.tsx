@@ -15,7 +15,7 @@ export default function FollowingsScreen() {
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const [followings, setFollowings] = useState<any[]>([]);
   const [feedItems, setFeedItems] = useState<any[]>([]);
-  const [filter, setFilter] = useState<'all' | 'short' | 'long'>('all');
+  const [filter, setFilter] = useState<'all' | 'short' | 'video'>('all');
   const [loading, setLoading] = useState(false);
   const [authModalVisible, setAuthModalVisible] = useState(false);
 
@@ -32,9 +32,10 @@ export default function FollowingsScreen() {
   const loadFollowings = async () => {
     setLoading(true);
     try {
+      const videoParams = filter === 'all' ? {} : { type: filter === 'short' ? 'short' : 'video' };
       const [fRes, vRes, pRes] = await Promise.all([
         api.get('/followers/me'),
-        api.get('/videos/followed', { params: filter === 'all' ? {} : { type: filter === 'short' ? 'short' : 'long' } }),
+        api.get('/videos/followed', { params: videoParams }),
         api.get('/posts/followed')
       ]);
 
@@ -93,10 +94,10 @@ export default function FollowingsScreen() {
         </ScrollView>
       </View>
       <View style={styles.filters}>
-        {(['all', 'short', 'long'] as const).map((item) => (
+        {(['all', 'video', 'short'] as const).map((item) => (
           <TouchableOpacity key={item} style={[styles.filterBtn, filter === item && styles.filterBtnActive]} onPress={() => setFilter(item)}>
             <Text style={[styles.filterText, filter === item && styles.filterTextActive]}>
-              {item === 'all' ? 'All' : item === 'short' ? 'Shorts' : 'Long'}
+              {item === 'all' ? 'All' : item === 'short' ? 'Shorts' : 'Videos'}
             </Text>
           </TouchableOpacity>
         ))}

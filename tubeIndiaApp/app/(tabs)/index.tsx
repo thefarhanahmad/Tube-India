@@ -10,6 +10,8 @@ import { videoService, categoryService } from '../../services/api';
 import { fetchVideosStart, fetchVideosSuccess, fetchVideosFailure } from '../../redux/slices/videoSlice';
 import { RootState } from '../../redux/store';
 import api from '../../services/api';
+import AuthModal from '../../components/AuthModal';
+import PlaylistModal from '../../components/PlaylistModal';
 
 const SAMPLE_VIDEOS = [
   {
@@ -63,7 +65,11 @@ export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [categoriesList, setCategoriesList] = useState<string[]>(['All']);
   const [posts, setPosts] = useState<any[]>([]);
-  const [reportVideo, setReportVideo] = useState<any>(null);
+  
+  const [selectedVideo, setSelectedVideo] = useState<any>(null);
+  const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [playlistModalVisible, setPlaylistModalVisible] = useState(false);
+  const [authModalVisible, setAuthModalVisible] = useState(false);
   const [reportReason, setReportReason] = useState('');
 
   useFocusEffect(
@@ -165,7 +171,23 @@ export default function HomeScreen() {
       <FlatList
         data={feedItems}
         keyExtractor={(item) => item._id}
-        renderItem={({ item }) => item.itemType === 'post' ? <PostCard post={item} /> : <VideoCard video={item} />}
+        renderItem={({ item }) => item.itemType === 'post' ? (
+          <PostCard post={item} />
+        ) : (
+          <VideoCard 
+            video={item} 
+            onPlaylistPress={(id) => {
+              if (!isAuthenticated) return setAuthModalVisible(true);
+              setSelectedVideo(item);
+              setPlaylistModalVisible(true);
+            }}
+            onReportPress={(v) => {
+              if (!isAuthenticated) return setAuthModalVisible(true);
+              setSelectedVideo(v);
+              setReportModalVisible(true);
+            }}
+          />
+        )}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
         refreshing={loading}
@@ -176,7 +198,22 @@ export default function HomeScreen() {
           </View>
         }
       />
-      <Modal visible={!!reportVideo} transparent animationType="fade">
+
+      <AuthModal 
+        visible={authModalVisible} 
+        onClose={() => setAuthModalVisible(false)} 
+      />
+
+      <PlaylistModal 
+        visible={playlistModalVisible} 
+        onClose={() => {
+          setPlaylistModalVisible(false);
+          setSelectedVideo(null);
+        }}
+        videoId={selectedVideo?._id}
+      />
+
+      <Modal visible={reportModalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.reportBox}>
             <Text style={styles.reportTitle}>Report video</Text>
@@ -188,16 +225,17 @@ export default function HomeScreen() {
               multiline
             />
             <View style={styles.reportActions}>
-              <TouchableOpacity onPress={() => { setReportVideo(null); setReportReason(''); }}>
+              <TouchableOpacity onPress={() => { setReportModalVisible(false); setSelectedVideo(null); setReportReason(''); }}>
                 <Text style={styles.cancelText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.submitReport}
                 onPress={async () => {
                   try {
-                    await api.post(`/videos/${reportVideo._id}/report`, { reason: reportReason });
+                    await api.post(`/videos/${selectedVideo?._id}/report`, { reason: reportReason });
                     Alert.alert('Report sent', 'Thanks for helping keep Tube India safe.');
-                    setReportVideo(null);
+                    setReportModalVisible(false);
+                    setSelectedVideo(null);
                     setReportReason('');
                   } catch (err: any) {
                     Alert.alert('Report failed', err.response?.data?.message || 'Please try again');

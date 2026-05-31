@@ -12,6 +12,7 @@ export default function SearchScreen() {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
+  const [showResults, setShowResults] = useState(false);
 
   useEffect(() => {
     loadHistory();
@@ -30,6 +31,7 @@ export default function SearchScreen() {
     if (!term.trim()) return;
     setQuery(term);
     setLoading(true);
+    setShowResults(true);
     try {
       api.post('/users/search-history', { term }).then(loadHistory).catch(() => {});
       const res = await api.get('/videos/search', { params: { q: term } });
@@ -43,6 +45,17 @@ export default function SearchScreen() {
     }
   };
 
+  const clearSearch = () => {
+    setQuery('');
+    setResults([]);
+    setShowResults(false);
+  };
+
+  const onQueryChange = (text: string) => {
+    setQuery(text);
+    if (showResults) setShowResults(false);
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -54,13 +67,13 @@ export default function SearchScreen() {
             style={styles.input}
             placeholder="Search TubeIndia"
             value={query}
-            onChangeText={setQuery}
+            onChangeText={onQueryChange}
             autoFocus
             onSubmitEditing={() => handleSearch()}
             returnKeyType="search"
           />
           {query.length > 0 && (
-            <TouchableOpacity onPress={() => setQuery('')}>
+            <TouchableOpacity onPress={clearSearch}>
               <Ionicons name="close" size={20} color={Colors.textGray} />
             </TouchableOpacity>
           )}
@@ -76,8 +89,8 @@ export default function SearchScreen() {
         </View>
       ) : (
         <FlatList
-          data={results.length > 0 || query.length > 0 ? results : history}
-          keyExtractor={(item) => item._id || item.term}
+          data={showResults ? results : history.filter(h => h.term.toLowerCase().includes(query.toLowerCase()))}
+          keyExtractor={(item, index) => item._id || `${item.term}-${index}`}
           renderItem={({ item }) => item.term ? (
             <TouchableOpacity style={styles.historyRow} onPress={() => handleSearch(item.term)}>
               <Ionicons name="time-outline" size={18} color={Colors.textGray} />
@@ -86,7 +99,7 @@ export default function SearchScreen() {
           ) : <VideoCard video={item} />}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
-            query.length > 0 && !loading ? (
+            showResults && !loading ? (
               <View style={styles.center}>
                 <Text style={styles.emptyText}>No results found for "{query}"</Text>
               </View>

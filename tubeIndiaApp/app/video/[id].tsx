@@ -332,17 +332,20 @@ export default function VideoScreen() {
               )}
             </View>
 
-            <View style={styles.descriptionContainer}>
-              <Text style={styles.description} numberOfLines={2}>
-                {video.description}
-              </Text>
-            </View>
-
-            <View style={styles.divider} />
+            {!!video.description && (
+              <>
+                <View style={styles.descriptionContainer}>
+                  <Text style={styles.description} numberOfLines={2}>
+                    {video.description}
+                  </Text>
+                </View>
+                <View style={styles.divider} />
+              </>
+            )}
             
             <CommentList 
               videoId={video._id} 
-              onCommentAdded={loadVideoData}
+              onCommentAdded={() => setVideo((prev: any) => prev ? { ...prev, commentsCount: (prev.commentsCount || 0) + 1 } : prev)}
               isAuthenticated={isAuthenticated}
               onAuthRequired={() => setAuthModalVisible(true)}
             />

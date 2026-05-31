@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Image, ActivityIndicator, Alert, Modal, Animated, Easing } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import Colors from '../../constants/Colors';
 import api from '../../services/api';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import AuthModal from '../../components/AuthModal';
@@ -33,6 +33,24 @@ export default function UploadScreen() {
   const [postText, setPostText] = useState('');
   const [postImage, setPostImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
 
+  useFocusEffect(
+    useCallback(() => {
+      if (!editId) {
+        setUploadType(null);
+        // Also reset other fields for a fresh start
+        setTitle('');
+        setDescription('');
+        setCategory('');
+        setTags('');
+        setVisibility('public');
+        setVideo(null);
+        setThumbnail(null);
+        setPostText('');
+        setPostImage(null);
+      }
+    }, [editId])
+  );
+
   useEffect(() => {
     if (!isAuthenticated) {
       setAuthModalVisible(true);
@@ -46,19 +64,6 @@ export default function UploadScreen() {
     if (editId) {
       loadVideoDetails(editId);
       setUploadType('video');
-    } else {
-      // Reset state for new upload if not in edit mode
-      setTitle('');
-      setDescription('');
-      setCategory('');
-      setTags('');
-      setVisibility('public');
-      setVideo(null);
-      setThumbnail(null);
-      setUploadType(null);
-      setThumbnailChanged(false);
-      setPostText('');
-      setPostImage(null);
     }
   }, [isAuthenticated, user?.channelName, editId]);
 

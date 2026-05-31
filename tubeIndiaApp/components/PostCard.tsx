@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Modal, ScrollView, Dimensions } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Modal, ScrollView, Dimensions, Share } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Colors from '../constants/Colors';
@@ -22,6 +22,21 @@ const PostCard = ({ post }: { post: any }) => {
 
   const owner = post.owner || {};
   const isLiked = likes.includes(user?._id);
+
+  const handleShare = async () => {
+    try {
+      const shareMessage = post.text 
+        ? `${post.text}\n\nCheck out this post on TubeIndia!`
+        : 'Check out this post on TubeIndia!';
+        
+      await Share.share({
+        message: shareMessage,
+        url: post.imageUrl || undefined,
+      });
+    } catch (err) {
+      console.error('Share failed', err);
+    }
+  };
 
   const handleLike = async () => {
     if (!isAuthenticated) {
@@ -78,7 +93,7 @@ const PostCard = ({ post }: { post: any }) => {
           <Text style={styles.actionText}>{commentsCount}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
           <Ionicons name="share-social-outline" size={20} color={Colors.text} />
         </TouchableOpacity>
       </View>

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Modal, TextInput, Alert } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Modal, TextInput, Alert, Pressable, Share } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Colors from '../constants/Colors';
 import { useRouter } from 'expo-router';
 import { formatTimeAgo } from '../utils/formatDate';
 import api from '../services/api';
+import { useSelector } from 'react-redux';
+import { RootState } from '../redux/store';
 
 const FALLBACK_IMAGE = 'https://via.placeholder.com/640x360?text=No+Image';
 const FALLBACK_AVATAR = 'https://via.placeholder.com/80x80.png?text=User';
@@ -23,14 +25,17 @@ interface VideoCardProps {
       avatar: string;
     };
     duration: number;
+    videoUrl?: string;
   };
   onMenuPress?: () => void;
+  onPlaylistPress?: (videoId: string) => void;
+  onReportPress?: (video: any) => void;
 }
 
-const VideoCard: React.FC<VideoCardProps> = ({ video, onMenuPress }) => {
+const VideoCard: React.FC<VideoCardProps> = ({ video, onPlaylistPress, onReportPress }) => {
   const router = useRouter();
-  const [reportOpen, setReportOpen] = useState(false);
-  const [reason, setReason] = useState('');
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   const formatViews = (views: number) => {
     if (views >= 1000000) return `${(views / 1000000).toFixed(1)}M views`;
@@ -42,6 +47,31 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onMenuPress }) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
+  const handleShare = async () => {
+    setMenuVisible(false);
+    try {
+      await Share.share({
+        message: `Check out this video on TubeIndia: ${video.title}\n${video.videoUrl || ''}`,
+      });
+    } catch (err) {
+      console.error('Share failed', err);
+    }
+  };
+
+  const handleReport = () => {
+    setMenuVisible(false);
+    if (onReportPress) {
+      onReportPress(video);
+    }
+  };
+
+  const handlePlaylist = () => {
+    setMenuVisible(false);
+    if (onPlaylistPress) {
+      onPlaylistPress(video._id);
+    }
   };
 
   return (
@@ -73,48 +103,44 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onMenuPress }) => {
         </View>
         <TouchableOpacity style={styles.menuButton} onPress={(e) => {
           e.stopPropagation();
-          if (onMenuPress) {
-            onMenuPress();
-          } else {
-            setReportOpen(true);
-          }
+          setMenuVisible(true);
         }}>
           <Ionicons name="ellipsis-vertical" size={18} color={Colors.text} />
         </TouchableOpacity>
       </View>
-      <Modal visible={reportOpen} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.reportBox}>
-            <Text style={styles.reportTitle}>Report video</Text>
-            <TextInput
-              style={styles.reportInput}
-              placeholder="Tell us what is wrong"
-              value={reason}
-              onChangeText={setReason}
-              multiline
-            />
-            <View style={styles.reportActions}>
-              <TouchableOpacity onPress={() => { setReportOpen(false); setReason(''); }}>
-                <Text style={styles.cancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.submitReport}
-                onPress={async () => {
-                  try {
-                    await api.post(`/videos/${video._id}/report`, { reason });
-                    Alert.alert('Report sent', 'Thanks for helping keep Tube India safe.');
-                    setReportOpen(false);
-                    setReason('');
-                  } catch (err: any) {
-                    Alert.alert('Report failed', err.response?.data?.message || 'Please login and try again');
-                  }
-                }}
-              >
-                <Text style={styles.submitReportText}>Submit</Text>
-              </TouchableOpacity>
-            </View>
+
+      {/* Action Menu Modal */}
+      <Modal
+        visible={menuVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMenuVisible(false)}
+      >
+        <Pressable 
+          style={styles.modalOverlay} 
+          onPress={() => setMenuVisible(false)}
+        >
+          <View style={styles.menuContent}>
+            <TouchableOpacity style={styles.menuItem} onPress={handlePlaylist}>
+              <Ionicons name="add-circle-outline" size={24} color={Colors.text} />
+              <Text style={styles.menuText}>Add to Playlist</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.menuItem} onPress={handleShare}>
+              <Ionicons name="share-social-outline" size={24} color={Colors.text} />
+              <Text style={styles.menuText}>Share</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.menuItem} onPress={handleReport}>
+              <Ionicons name="flag-outline" size={24} color={Colors.text} />
+              <Text style={styles.menuText}>Report</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.cancelItem} onPress={() => setMenuVisible(false)}>
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
           </View>
-        </View>
+        </Pressable>
       </Modal>
     </TouchableOpacity>
   );
@@ -175,39 +201,39 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  menuContent: {
+    backgroundColor: Colors.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     padding: 20,
   },
-  reportBox: {
-    backgroundColor: Colors.white,
-    borderRadius: 8,
-    padding: 16,
-  },
-  reportTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.text,
-    marginBottom: 12,
-  },
-  reportInput: {
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 8,
-    minHeight: 90,
-    padding: 10,
-    textAlignVertical: 'top',
-  },
-  reportActions: {
+  menuItem: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
     alignItems: 'center',
-    marginTop: 14,
-    gap: 18,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
-  cancelText: { color: Colors.textGray, fontWeight: '600' },
-  submitReport: { backgroundColor: Colors.primary, borderRadius: 8, paddingHorizontal: 18, paddingVertical: 10 },
-  submitReportText: { color: Colors.white, fontWeight: 'bold' },
+  menuText: {
+    fontSize: 16,
+    marginLeft: 15,
+    color: Colors.text,
+  },
+  cancelItem: {
+    marginTop: 10,
+    paddingVertical: 15,
+    alignItems: 'center',
+    backgroundColor: Colors.background,
+    borderRadius: 10,
+  },
+  cancelText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.textGray,
+  },
 });
 
 export default VideoCard;

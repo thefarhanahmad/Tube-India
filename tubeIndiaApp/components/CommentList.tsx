@@ -30,16 +30,16 @@ const CommentList: React.FC<CommentListProps> = ({ videoId, postId, onCommentAdd
     fetchComments();
   }, [videoId, postId]);
 
-  const fetchComments = async () => {
+  const fetchComments = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const params = videoId ? { videoId } : { postId };
       const response = await api.get('/comments', { params });
       setComments(response.data.data || []);
     } catch (err) {
       console.error('Failed to fetch comments', err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -55,7 +55,7 @@ const CommentList: React.FC<CommentListProps> = ({ videoId, postId, onCommentAdd
         text: newComment 
       });
       setNewComment('');
-      fetchComments();
+      fetchComments(true);
       onCommentAdded();
     } catch (err) {
       console.error('Failed to add comment', err);
@@ -86,7 +86,7 @@ const CommentList: React.FC<CommentListProps> = ({ videoId, postId, onCommentAdd
     if (!text.trim()) return;
     try {
       await api.post(`/comments/${commentId}/replies`, { text });
-      fetchComments();
+      fetchComments(true);
     } catch (err) {
       console.error('Failed to reply', err);
     }
