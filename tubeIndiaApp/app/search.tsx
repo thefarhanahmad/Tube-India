@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -11,12 +11,28 @@ export default function SearchScreen() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [history, setHistory] = useState<any[]>([]);
 
-  const handleSearch = async () => {
-    if (!query.trim()) return;
+  useEffect(() => {
+    loadHistory();
+  }, []);
+
+  const loadHistory = async () => {
+    try {
+      const res = await api.get('/users/search-history');
+      if (res.data.success) setHistory(res.data.data || []);
+    } catch {
+      setHistory([]);
+    }
+  };
+
+  const handleSearch = async (term = query) => {
+    if (!term.trim()) return;
+    setQuery(term);
     setLoading(true);
     try {
-      const res = await api.get(`/videos/search?q=${query}`);
+      api.post('/users/search-history', { term }).then(loadHistory).catch(() => {});
+      const res = await api.get('/videos/search', { params: { q: term } });
       if (res.data.success) {
         setResults(res.data.data);
       }
@@ -40,7 +56,7 @@ export default function SearchScreen() {
             value={query}
             onChangeText={setQuery}
             autoFocus
-            onSubmitEditing={handleSearch}
+            onSubmitEditing={() => handleSearch()}
             returnKeyType="search"
           />
           {query.length > 0 && (
@@ -49,7 +65,7 @@ export default function SearchScreen() {
             </TouchableOpacity>
           )}
         </View>
-        <TouchableOpacity onPress={handleSearch}>
+        <TouchableOpacity onPress={() => handleSearch()}>
           <Ionicons name="search" size={24} color={Colors.text} />
         </TouchableOpacity>
       </View>
@@ -60,9 +76,14 @@ export default function SearchScreen() {
         </View>
       ) : (
         <FlatList
-          data={results}
-          keyExtractor={(item) => item._id}
-          renderItem={({ item }) => <VideoCard video={item} />}
+          data={results.length > 0 || query.length > 0 ? results : history}
+          keyExtractor={(item) => item._id || item.term}
+          renderItem={({ item }) => item.term ? (
+            <TouchableOpacity style={styles.historyRow} onPress={() => handleSearch(item.term)}>
+              <Ionicons name="time-outline" size={18} color={Colors.textGray} />
+              <Text style={styles.historyText}>{item.term}</Text>
+            </TouchableOpacity>
+          ) : <VideoCard video={item} />}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             query.length > 0 && !loading ? (
@@ -118,5 +139,18 @@ const styles = StyleSheet.create({
   emptyText: {
     color: Colors.textGray,
     fontSize: 16,
+  },
+  historyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  historyText: {
+    marginLeft: 12,
+    fontSize: 15,
+    color: Colors.text,
   },
 });

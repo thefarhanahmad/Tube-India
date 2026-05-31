@@ -47,7 +47,6 @@ const videoSchema = new mongoose.Schema({
   category: {
     type: mongoose.Schema.ObjectId,
     ref: 'Category',
-    required: [true, 'Please add a category'],
   },
   tags: [String],
   visibility: {
@@ -62,6 +61,15 @@ const videoSchema = new mongoose.Schema({
   isShort: {
     type: Boolean,
     default: false,
+  },
+  contentType: {
+    type: String,
+    enum: ['video', 'short'],
+    default: 'video',
+  },
+  aspectRatio: {
+    type: Number,
+    default: null,
   },
   createdAt: {
     type: Date,

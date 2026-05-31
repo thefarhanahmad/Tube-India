@@ -1,13 +1,15 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, FlatList, StyleSheet, ActivityIndicator, Text } from 'react-native';
+import { View, FlatList, StyleSheet, ActivityIndicator, Text, Modal, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { useFocusEffect } from 'expo-router';
 import Colors from '../../constants/Colors';
 import VideoCard from '../../components/VideoCard';
+import PostCard from '../../components/PostCard';
 import CategoryList from '../../components/CategoryList';
 import { videoService, categoryService } from '../../services/api';
 import { fetchVideosStart, fetchVideosSuccess, fetchVideosFailure } from '../../redux/slices/videoSlice';
 import { RootState } from '../../redux/store';
+import api from '../../services/api';
 
 const SAMPLE_VIDEOS = [
   {
@@ -60,10 +62,14 @@ export default function HomeScreen() {
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [categoriesList, setCategoriesList] = useState<string[]>(['All']);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [reportVideo, setReportVideo] = useState<any>(null);
+  const [reportReason, setReportReason] = useState('');
 
   useFocusEffect(
     useCallback(() => {
       loadVideos();
+      loadPosts();
       loadCategories();
     }, [isAuthenticated])
   );
@@ -115,9 +121,22 @@ export default function HomeScreen() {
     }
   };
 
+  const loadPosts = async () => {
+    try {
+      const res = await api.get('/posts');
+      if (res.data.success) setPosts(res.data.data || []);
+    } catch (err) {
+      setPosts([]);
+    }
+  };
+
   const filteredVideos = selectedCategory === 'All'
     ? videos
     : videos.filter(v => v.category === selectedCategory);
+  const feedItems = selectedCategory === 'All'
+    ? [...filteredVideos.map((item: any) => ({ ...item, itemType: 'video' })), ...posts.map((item: any) => ({ ...item, itemType: 'post' }))]
+      .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+    : filteredVideos.map((item: any) => ({ ...item, itemType: 'video' }));
 
   if (loading && videos.length === 0) {
     return (
@@ -135,9 +154,9 @@ export default function HomeScreen() {
         onSelectCategory={setSelectedCategory}
       />
       <FlatList
-        data={filteredVideos}
+        data={feedItems}
         keyExtractor={(item) => item._id}
-        renderItem={({ item }) => <VideoCard video={item} />}
+        renderItem={({ item }) => item.itemType === 'post' ? <PostCard post={item} /> : <VideoCard video={item} />}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
         refreshing={loading}
@@ -148,6 +167,40 @@ export default function HomeScreen() {
           </View>
         }
       />
+      <Modal visible={!!reportVideo} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.reportBox}>
+            <Text style={styles.reportTitle}>Report video</Text>
+            <TextInput
+              style={styles.reportInput}
+              placeholder="Tell us what is wrong"
+              value={reportReason}
+              onChangeText={setReportReason}
+              multiline
+            />
+            <View style={styles.reportActions}>
+              <TouchableOpacity onPress={() => { setReportVideo(null); setReportReason(''); }}>
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.submitReport}
+                onPress={async () => {
+                  try {
+                    await api.post(`/videos/${reportVideo._id}/report`, { reason: reportReason });
+                    Alert.alert('Report sent', 'Thanks for helping keep Tube India safe.');
+                    setReportVideo(null);
+                    setReportReason('');
+                  } catch (err: any) {
+                    Alert.alert('Report failed', err.response?.data?.message || 'Please try again');
+                  }
+                }}
+              >
+                <Text style={styles.submitReportText}>Submit</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -170,4 +223,39 @@ const styles = StyleSheet.create({
     color: Colors.textGray,
     fontSize: 16,
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  reportBox: {
+    backgroundColor: Colors.white,
+    borderRadius: 8,
+    padding: 16,
+  },
+  reportTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.text,
+    marginBottom: 12,
+  },
+  reportInput: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 8,
+    minHeight: 90,
+    padding: 10,
+    textAlignVertical: 'top',
+  },
+  reportActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginTop: 14,
+    gap: 18,
+  },
+  cancelText: { color: Colors.textGray, fontWeight: '600' },
+  submitReport: { backgroundColor: Colors.primary, borderRadius: 8, paddingHorizontal: 18, paddingVertical: 10 },
+  submitReportText: { color: Colors.white, fontWeight: 'bold' },
 });

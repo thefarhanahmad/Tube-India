@@ -11,12 +11,14 @@ import { RootState } from '../../redux/store';
 import AuthModal from '../../components/AuthModal';
 import CommentList from '../../components/CommentList';
 import { Modal } from 'react-native';
+import { useRouter } from 'expo-router';
 const FALLBACK_AVATAR = 'https://via.placeholder.com/80x80.png?text=User';
 
 const { height, width } = Dimensions.get('window');
 
 export default function ShortsScreen() {
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+  const router = useRouter();
   const isFocused = useIsFocused();
   const [shorts, setShorts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,8 +34,8 @@ export default function ShortsScreen() {
   const loadShorts = async () => {
     setLoading(true);
     try {
-      const data = await api.get('/videos');
-      const onlyShorts = (data.data.data || []).filter((v: any) => !!v.isShort).map((v: any) => ({
+      const data = await api.get('/videos', { params: { type: 'short' } });
+      const onlyShorts = (data.data.data || []).map((v: any) => ({
         _id: v._id,
         videoUrl: v.videoUrl,
         thumbnail: v.thumbnail,
@@ -166,7 +168,6 @@ export default function ShortsScreen() {
         data={shorts}
         keyExtractor={(item) => item._id}
         pagingEnabled
-        vertical
         showsVerticalScrollIndicator={false}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
@@ -199,7 +200,7 @@ export default function ShortsScreen() {
               </View>
 
               <View style={styles.bottomDetails}>
-                <View style={styles.ownerRow}>
+                <TouchableOpacity style={styles.ownerRow} onPress={() => item.owner?._id && router.push(`/channel/${item.owner._id}`)}>
                   <Image source={{ uri: item.owner?.avatar || FALLBACK_AVATAR }} style={styles.ownerAvatar} />
                   <Text style={styles.ownerName} numberOfLines={1}>@{item.owner.channelName || item.owner.name}</Text>
                   {item.owner._id !== user?._id && (
@@ -212,7 +213,7 @@ export default function ShortsScreen() {
                       </Text>
                     </TouchableOpacity>
                   )}
-                </View>
+                </TouchableOpacity>
                 <Text style={styles.shortTitle} numberOfLines={2}>{item.title}</Text>
               </View>
             </View>

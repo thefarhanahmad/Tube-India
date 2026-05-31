@@ -65,6 +65,18 @@ const userSchema = new mongoose.Schema({
       ref: 'Video',
     },
   ],
+  searchHistory: [
+    {
+      term: {
+        type: String,
+        trim: true,
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+  ],
   role: {
     type: String,
     enum: ['user', 'admin'],

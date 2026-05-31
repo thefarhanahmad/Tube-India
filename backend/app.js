@@ -19,6 +19,8 @@ const video = require("./routes/video");
 const comment = require("./routes/comment");
 const followers = require("./routes/followers");
 const playlist = require("./routes/playlist");
+const notifications = require("./routes/notifications");
+const posts = require("./routes/posts");
 
 // Middlewares
 app.use(express.json());
@@ -57,6 +59,8 @@ app.use("/api/videos", video);
 app.use("/api/comments", comment);
 app.use("/api/followers", followers);
 app.use("/api/playlists", playlist);
+app.use("/api/notifications", notifications);
+app.use("/api/posts", posts);
 
 // Basic route
 app.get("/", (req, res) => {

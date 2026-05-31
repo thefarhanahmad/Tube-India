@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Image, ActivityIndicator, Alert } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Image, ActivityIndicator, Alert, Modal, Animated, Easing } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import Colors from '../../constants/Colors';
@@ -20,7 +20,7 @@ export default function UploadScreen() {
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
   const [tags, setTags] = useState('');
-  const [visibility, setVisibility] = useState('public');
+  const [visibility, setVisibility] = useState('private');
   const [video, setVideo] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [thumbnail, setThumbnail] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -28,6 +28,10 @@ export default function UploadScreen() {
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [visibilityOpen, setVisibilityOpen] = useState(false);
   const [thumbnailChanged, setThumbnailChanged] = useState(false);
+  const [uploadType, setUploadType] = useState<'video' | 'short' | 'post' | null>(editId ? 'video' : null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [postText, setPostText] = useState('');
+  const [postImage, setPostImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -67,7 +71,6 @@ export default function UploadScreen() {
       const res = await api.get('/categories');
       if (res.data.success) {
         setCategories(res.data.data);
-        if (res.data.data.length > 0 && !editId) setCategory(res.data.data[0]._id);
       }
     } catch (err) {
       console.log('Failed to load categories');
@@ -83,8 +86,24 @@ export default function UploadScreen() {
     });
 
     if (!result.canceled) {
+      if (uploadType === 'short') {
+        const asset: any = result.assets[0];
+        if (asset.width && asset.height && Math.abs((asset.width / asset.height) - (9 / 16)) > 0.035) {
+          Alert.alert('Invalid short', 'Shorts must be portrait 9:16 videos.');
+          return;
+        }
+      }
       setVideo(result.assets[0]);
     }
+  };
+
+  const pickPostImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      quality: 1,
+    });
+    if (!result.canceled) setPostImage(result.assets[0]);
   };
 
   const pickThumbnail = async () => {
@@ -117,19 +136,27 @@ export default function UploadScreen() {
       return;
     }
 
-    if (!video || !thumbnail || !title || !category) {
-      Alert.alert('Error', 'Please fill all required fields and select both video and thumbnail');
+    if (uploadType === 'post') {
+      handlePostUpload();
+      return;
+    }
+
+    if (!video) {
+      Alert.alert('Error', 'Please select a video');
       return;
     }
 
     setUploading(true);
+    setUploadProgress(0);
     try {
       const formData = new FormData();
-      formData.append('title', title);
-      formData.append('description', description);
-      formData.append('category', category);
-      formData.append('tags', tags);
-      formData.append('visibility', visibility);
+      formData.append('uploadType', uploadType || 'video');
+      const hasMetadata = !!(title.trim() || description.trim() || category || tags.trim() || thumbnail);
+      if (title.trim()) formData.append('title', title.trim());
+      if (description.trim()) formData.append('description', description.trim());
+      if (category) formData.append('category', category);
+      if (tags.trim()) formData.append('tags', tags.trim());
+      formData.append('visibility', hasMetadata ? visibility : 'private');
       
       // @ts-ignore
       formData.append('video', {
@@ -138,16 +165,21 @@ export default function UploadScreen() {
         name: 'video.mp4',
       });
 
-      // @ts-ignore
-      formData.append('thumbnail', {
-        uri: thumbnail.uri,
-        type: 'image/jpeg',
-        name: 'thumbnail.jpg',
-      });
+      if (thumbnail) {
+        // @ts-ignore
+        formData.append('thumbnail', {
+          uri: thumbnail.uri,
+          type: 'image/jpeg',
+          name: 'thumbnail.jpg',
+        });
+      }
 
       await api.post('/videos/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress: (event) => {
+          if (event.total) setUploadProgress(Math.round((event.loaded / event.total) * 100));
         },
       });
 
@@ -160,8 +192,41 @@ export default function UploadScreen() {
     }
   };
 
+  const handlePostUpload = async () => {
+    if (!postText.trim() && !postImage) {
+      Alert.alert('Error', 'Add text or an image for your post');
+      return;
+    }
+    setUploading(true);
+    setUploadProgress(0);
+    try {
+      const formData = new FormData();
+      formData.append('text', postText);
+      formData.append('visibility', visibility);
+      if (postImage) {
+        // @ts-ignore
+        formData.append('image', { uri: postImage.uri, type: 'image/jpeg', name: 'post.jpg' });
+      }
+      await api.post('/posts', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (event) => {
+          if (event.total) setUploadProgress(Math.round((event.loaded / event.total) * 100));
+        },
+      });
+      Alert.alert('Success', 'Post published successfully!');
+      setUploadType(null);
+      setPostText('');
+      setPostImage(null);
+    } catch (err: any) {
+      Alert.alert('Post Failed', err.response?.data?.message || 'Something went wrong');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleUpdate = async () => {
     setUploading(true);
+    setUploadProgress(0);
     try {
       if (thumbnailChanged && thumbnail) {
         const formData = new FormData();
@@ -179,6 +244,9 @@ export default function UploadScreen() {
         await api.put(`/videos/${editId}`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
+          },
+          onUploadProgress: (event) => {
+            if (event.total) setUploadProgress(Math.round((event.loaded / event.total) * 100));
           },
         });
       } else {
@@ -230,10 +298,42 @@ export default function UploadScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <AuthModal visible={authModalVisible} onClose={() => setAuthModalVisible(false)} />
+      <ProgressOverlay visible={uploading} progress={uploadProgress} label={editId ? 'Saving' : uploadType === 'post' ? 'Publishing' : 'Uploading'} />
       
-      <Text style={styles.headerTitle}>{editId ? 'Edit Video' : 'Upload Video'}</Text>
+      <Text style={styles.headerTitle}>{editId ? 'Edit Video' : uploadType ? `Upload ${uploadType === 'short' ? 'Short' : uploadType === 'post' ? 'Post' : 'Video'}` : 'Create'}</Text>
 
-      {!editId && (
+      {!editId && !uploadType && (
+        <View style={styles.typeGrid}>
+          {[
+            { key: 'video', label: 'Video', icon: 'videocam-outline' },
+            { key: 'short', label: 'Short', icon: 'phone-portrait-outline' },
+            { key: 'post', label: 'Post', icon: 'document-text-outline' },
+          ].map((item: any) => (
+            <TouchableOpacity key={item.key} style={styles.typeCard} onPress={() => setUploadType(item.key)}>
+              <Ionicons name={item.icon} size={32} color={Colors.primary} />
+              <Text style={styles.typeText}>{item.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
+      {!editId && uploadType === 'post' && (
+        <>
+          <Text style={styles.label}>Post Text</Text>
+          <TextInput style={[styles.input, styles.textArea]} placeholder="Share an update..." multiline value={postText} onChangeText={setPostText} />
+          <Text style={styles.label}>Image</Text>
+          <TouchableOpacity style={[styles.picker, styles.thumbnailPicker]} onPress={pickPostImage}>
+            {postImage ? <Image source={{ uri: postImage.uri }} style={styles.thumbnailPreview} /> : (
+              <>
+                <Ionicons name="image-outline" size={40} color={Colors.textGray} />
+                <Text style={styles.pickerText}>Select Image</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </>
+      )}
+
+      {!editId && uploadType && uploadType !== 'post' && (
         <>
           <Text style={styles.label}>Video File *</Text>
           <TouchableOpacity style={styles.picker} onPress={pickVideo}>
@@ -253,7 +353,9 @@ export default function UploadScreen() {
         </>
       )}
 
-      <Text style={styles.label}>{editId ? 'Thumbnail' : 'Thumbnail *'}</Text>
+      {uploadType !== null && uploadType !== 'post' && (
+      <>
+      <Text style={styles.label}>Thumbnail</Text>
       <TouchableOpacity style={[styles.picker, styles.thumbnailPicker]} onPress={pickThumbnail}>
         {thumbnail ? (
           <Image source={{ uri: thumbnail.uri }} style={styles.thumbnailPreview} />
@@ -265,7 +367,7 @@ export default function UploadScreen() {
         )}
       </TouchableOpacity>
 
-      <Text style={styles.label}>Title *</Text>
+      <Text style={styles.label}>Title</Text>
       <TextInput
         style={styles.input}
         placeholder="Enter video title"
@@ -283,7 +385,7 @@ export default function UploadScreen() {
         onChangeText={setDescription}
       />
 
-      <Text style={styles.label}>Category *</Text>
+      <Text style={styles.label}>Category</Text>
       <View style={styles.selectContainer}>
         <TouchableOpacity style={styles.selectTrigger} onPress={() => setCategoryOpen(!categoryOpen)}>
           <Text style={styles.selectValue}>
@@ -341,20 +443,79 @@ export default function UploadScreen() {
         )}
       </View>
 
+      </>)}
+
+      {uploadType && (
       <TouchableOpacity 
         style={[styles.uploadButton, uploading && styles.disabledButton]} 
         onPress={handleUpload}
         disabled={uploading}
       >
-        {uploading ? (
-          <ActivityIndicator color={Colors.white} />
-        ) : (
-          <Text style={styles.uploadButtonText}>{editId ? 'Save Changes' : 'Upload Video'}</Text>
-        )}
+        <Text style={styles.uploadButtonText}>{editId ? 'Save Changes' : uploadType === 'post' ? 'Publish Post' : 'Upload Video'}</Text>
       </TouchableOpacity>
+      )}
     </ScrollView>
   );
 }
+
+const ProgressOverlay = ({ visible, progress, label }: { visible: boolean; progress: number; label: string }) => {
+  const spin = useRef(new Animated.Value(0)).current;
+  const animatedProgress = useRef(new Animated.Value(0)).current;
+  const progressValue = Math.max(0, Math.min(progress || 0, 100));
+
+  useEffect(() => {
+    if (!visible) return;
+    spin.setValue(0);
+    const loop = Animated.loop(
+      Animated.timing(spin, {
+        toValue: 1,
+        duration: 1200,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [visible, spin]);
+
+  useEffect(() => {
+    Animated.timing(animatedProgress, {
+      toValue: progressValue,
+      duration: 260,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  }, [animatedProgress, progressValue]);
+
+  const spinRotation = spin.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+  const progressWidth = animatedProgress.interpolate({
+    inputRange: [0, 100],
+    outputRange: ['0%', '100%'],
+  });
+
+  return (
+    <Modal visible={visible} transparent animationType="fade">
+      <View style={styles.progressOverlay}>
+        <View style={styles.progressBox}>
+          <View style={styles.progressRing}>
+            <Animated.View style={[styles.progressArc, { transform: [{ rotate: spinRotation }] }]} />
+            <View style={styles.progressRingInner}>
+              <Text style={styles.progressPercent}>{progressValue}%</Text>
+            </View>
+          </View>
+          <Text style={styles.progressLabel}>{label}...</Text>
+          <View style={styles.progressTrack}>
+            <Animated.View style={[styles.progressBar, { width: progressWidth }]} />
+          </View>
+          <Text style={styles.progressHint}>Keep this screen open</Text>
+        </View>
+      </View>
+    </Modal>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -465,6 +626,26 @@ const styles = StyleSheet.create({
   selectContainer: {
     marginBottom: 6,
   },
+  typeGrid: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 16,
+  },
+  typeCard: {
+    flex: 1,
+    minHeight: 110,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.background,
+  },
+  typeText: {
+    marginTop: 8,
+    color: Colors.text,
+    fontWeight: '700',
+  },
   selectTrigger: {
     borderWidth: 1,
     borderColor: Colors.border,
@@ -514,5 +695,78 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  progressOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  progressBox: {
+    width: 220,
+    alignItems: 'center',
+    backgroundColor: Colors.white,
+    borderRadius: 8,
+    padding: 24,
+  },
+  progressRing: {
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    borderWidth: 9,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  progressArc: {
+    position: 'absolute',
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    borderTopWidth: 9,
+    borderRightWidth: 9,
+    borderBottomWidth: 9,
+    borderLeftWidth: 9,
+    borderColor: Colors.primary,
+    borderLeftColor: 'transparent',
+    borderBottomColor: 'transparent',
+  },
+  progressRingInner: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: Colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  progressPercent: {
+    color: Colors.text,
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  progressLabel: {
+    marginTop: 14,
+    color: Colors.text,
+    fontWeight: '700',
+  },
+  progressTrack: {
+    width: '100%',
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.border,
+    marginTop: 18,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    borderRadius: 4,
+    backgroundColor: Colors.primary,
+  },
+  progressHint: {
+    marginTop: 10,
+    color: Colors.textGray,
+    fontSize: 12,
   },
 });

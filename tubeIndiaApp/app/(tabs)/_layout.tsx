@@ -35,12 +35,14 @@ export default function TabsLayout() {
             />          ),
           headerTitleAlign: 'left',
           headerRight: () => (
-            <TouchableOpacity 
-              style={{ marginRight: 15 }} 
-              onPress={() => router.push('/search')}
-            >
-              <Ionicons name="search" size={24} color={Colors.text} />
-            </TouchableOpacity>
+            <>
+              <TouchableOpacity style={{ marginRight: 15 }} onPress={() => router.push('/notifications')}>
+                <Ionicons name="notifications-outline" size={24} color={Colors.text} />
+              </TouchableOpacity>
+              <TouchableOpacity style={{ marginRight: 15 }} onPress={() => router.push('/search')}>
+                <Ionicons name="search" size={24} color={Colors.text} />
+              </TouchableOpacity>
+            </>
           ),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" size={size} color={color} />

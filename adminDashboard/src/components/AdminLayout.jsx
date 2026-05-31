@@ -20,6 +20,7 @@ const AdminLayout = () => {
           <NavLink to="/users" className={linkClass}>Users</NavLink>
           <NavLink to="/categories" className={linkClass}>Categories</NavLink>
           <NavLink to="/videos" className={linkClass}>Videos</NavLink>
+          <NavLink to="/reports" className={linkClass}>Reports</NavLink>
         </nav>
       </aside>
       <div className="flex-1 flex flex-col">

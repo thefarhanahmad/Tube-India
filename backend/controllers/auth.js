@@ -68,7 +68,7 @@ const cloudinary = require('cloudinary').v2;
 exports.updateChannel = async (req, res, next) => {
   try {
     console.log('Update Channel request received:', req.body);
-    const { channelName, about } = req.body;
+    const { name, channelName, about } = req.body;
     let avatar = normalizeAvatar(req.body.avatar);
 
     if (req.file) {
@@ -82,7 +82,7 @@ exports.updateChannel = async (req, res, next) => {
 
     const user = await User.findByIdAndUpdate(
       req.user.id,
-      { channelName, about, avatar },
+      { name, channelName, about, avatar },
       { new: true, runValidators: true }
     );
 

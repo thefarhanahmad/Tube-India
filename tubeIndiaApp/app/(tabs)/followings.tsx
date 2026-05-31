@@ -13,6 +13,7 @@ export default function FollowingsScreen() {
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const [followings, setFollowings] = useState<any[]>([]);
   const [recentVideos, setRecentVideos] = useState<any[]>([]);
+  const [filter, setFilter] = useState<'all' | 'short' | 'long'>('all');
   const [loading, setLoading] = useState(false);
   const [authModalVisible, setAuthModalVisible] = useState(false);
 
@@ -23,7 +24,7 @@ export default function FollowingsScreen() {
       } else {
         setAuthModalVisible(true);
       }
-    }, [isAuthenticated])
+    }, [isAuthenticated, filter])
   );
 
   const loadFollowings = async () => {
@@ -31,7 +32,7 @@ export default function FollowingsScreen() {
     try {
       const [fRes, vRes] = await Promise.all([
         api.get('/followers/me'),
-        api.get('/videos/followed')
+        api.get('/videos/followed', { params: filter === 'all' ? {} : { type: filter === 'short' ? 'short' : 'long' } })
       ]);
 
       if (fRes.data.success) {
@@ -75,6 +76,15 @@ export default function FollowingsScreen() {
           )}
           {loading && <ActivityIndicator style={{ marginLeft: 15 }} color={Colors.primary} />}
         </ScrollView>
+      </View>
+      <View style={styles.filters}>
+        {(['all', 'short', 'long'] as const).map((item) => (
+          <TouchableOpacity key={item} style={[styles.filterBtn, filter === item && styles.filterBtnActive]} onPress={() => setFilter(item)}>
+            <Text style={[styles.filterText, filter === item && styles.filterTextActive]}>
+              {item === 'all' ? 'All' : item === 'short' ? 'Shorts' : 'Long'}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       <FlatList
@@ -153,5 +163,32 @@ const styles = StyleSheet.create({
     color: Colors.textGray,
     textAlign: 'center',
     marginTop: 50,
+  },
+  filters: {
+    flexDirection: 'row',
+    gap: 8,
+    padding: 12,
+    backgroundColor: Colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  filterBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 8,
+    paddingVertical: 9,
+    alignItems: 'center',
+  },
+  filterBtnActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  filterText: {
+    color: Colors.text,
+    fontWeight: '600',
+  },
+  filterTextActive: {
+    color: Colors.white,
   },
 });

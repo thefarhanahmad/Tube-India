@@ -61,6 +61,8 @@ export default function RootLayout() {
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="video/[id]" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="channel/[id]" />
+            <Stack.Screen name="notifications" />
           </Stack>
         </GestureHandlerRootView>
       )}

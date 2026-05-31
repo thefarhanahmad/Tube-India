@@ -1,4 +1,5 @@
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.3.108:5000/api';
 
@@ -18,13 +19,24 @@ export const setAuthToken = (token?: string | null) => {
 };
 
 export const videoService = {
-  getVideos: async () => {
-    const response = await api.get('/videos');
+  getVideos: async (params?: any) => {
+    const response = await api.get('/videos', { params });
     // normalize to return the array of videos directly
     return response.data && response.data.data ? response.data.data : [];
   },
   getVideo: async (id: string) => {
     const response = await api.get(`/videos/${id}`);
+    return response.data;
+  },
+  recordView: async (id: string) => {
+    let deviceId = await AsyncStorage.getItem('device_id');
+    if (!deviceId) {
+      deviceId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      await AsyncStorage.setItem('device_id', deviceId);
+    }
+    const response = await api.post(`/videos/${id}/view`, { deviceId }, {
+      headers: { 'X-Device-Id': deviceId },
+    });
     return response.data;
   },
 };

@@ -10,7 +10,7 @@ const fileFilter = (req, file, cb) => {
     } else {
       cb(new Error('Please upload a video file'), false);
     }
-  } else if (file.fieldname === 'thumbnail') {
+  } else if (file.fieldname === 'thumbnail' || file.fieldname === 'image') {
     if (file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {

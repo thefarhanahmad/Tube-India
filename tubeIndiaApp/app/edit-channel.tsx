@@ -30,6 +30,7 @@ export default function EditChannelScreen() {
   const router = useRouter();
   const isCreateMode = !user?.channelName;
 
+  const [name, setName] = useState(user?.name || '');
   const [channelName, setChannelName] = useState(user?.channelName || '');
   const [about, setAbout] = useState(user?.about || '');
   const [avatar, setAvatar] = useState(user?.channelName ? (user?.avatar || '') : '');
@@ -59,6 +60,7 @@ export default function EditChannelScreen() {
     setLoading(true);
     try {
       const formData = new FormData();
+      formData.append('name', name);
       formData.append('channelName', channelName);
       formData.append('about', about);
       
@@ -131,6 +133,15 @@ export default function EditChannelScreen() {
         </TouchableOpacity>
         <Text style={styles.avatarLabel}>Change Profile Picture</Text>
       </View>
+
+      <Text style={styles.label}>Name</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Enter your name"
+        placeholderTextColor={Colors.textGray}
+        value={name}
+        onChangeText={setName}
+      />
 
       <Text style={styles.label}>Channel Name</Text>
       <TextInput

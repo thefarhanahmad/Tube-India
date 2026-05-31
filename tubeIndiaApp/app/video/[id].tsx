@@ -59,6 +59,11 @@ export default function VideoScreen() {
       if (isAuthenticated && videoData?._id) {
         api.post('/users/history', { videoId: videoData._id }).catch(() => {});
       }
+      if (videoData?._id) {
+        videoService.recordView(videoData._id)
+          .then((res) => setVideo((prev: any) => prev ? { ...prev, views: res.views } : prev))
+          .catch(() => {});
+      }
     } catch (err) {
       console.error('Failed to load video data', err);
     } finally {
@@ -291,13 +296,16 @@ export default function VideoScreen() {
             </View>
 
             <View style={styles.channelContainer}>
-              <View style={styles.channelInfo}>
+              <TouchableOpacity
+                style={styles.channelInfo}
+                onPress={() => video?.owner?._id && router.push(`/channel/${video.owner._id}`)}
+              >
                 <Image source={{ uri: video?.owner?.avatar || FALLBACK_IMAGE }} style={styles.avatar} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.channelName} numberOfLines={1}>{video?.owner?.channelName || video?.owner?.name || 'Unknown channel'}</Text>
                   <Text style={styles.followerCount}>{video?.owner?.followersCount || 0} followers</Text>
                 </View>
-              </View>
+              </TouchableOpacity>
               {video?.owner?._id !== user?._id && (
                 <TouchableOpacity 
                   style={[styles.followButton, isFollowed && styles.followedButton]} 

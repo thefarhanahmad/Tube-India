@@ -1,7 +1,7 @@
 const { body, validationResult } = require('express-validator');
 
 const videoValidationRules = () => [
-  body('title').notEmpty().withMessage('Title is required').isLength({ max: 200 }),
+  body('title').optional().isLength({ max: 200 }),
   body('description').optional().isLength({ max: 2000 }),
   body('category').optional().isString(),
 ];

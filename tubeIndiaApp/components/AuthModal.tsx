@@ -22,7 +22,11 @@ const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, onLoginSuccess 
   const [showPassword, setShowPassword] = useState(false);
   const CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || (Constants.manifest?.extra && (Constants.manifest.extra.EXPO_PUBLIC_GOOGLE_CLIENT_ID || Constants.manifest.extra.EXPO_PUBLIC_GOOGLE_CLIENT_ID)) || '';
   const ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || '';
-  const [request, response, promptAsync] = Google.useAuthRequest({ redirectUri: AuthSession.makeRedirectUri({ useProxy: Constants.appOwnership === 'expo' }), expoClientId: CLIENT_ID, androidClientId: ANDROID_CLIENT_ID || CLIENT_ID });
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    redirectUri: AuthSession.makeRedirectUri(),
+    clientId: CLIENT_ID,
+    androidClientId: ANDROID_CLIENT_ID || CLIENT_ID,
+  });
   useEffect(() => { if (response?.type === "success") { const { accessToken } = response.authentication || {}; if (accessToken) getUserInfo(accessToken); } }, [response]);
   const persistAuth = async (backendRes: any) => {
     const token = backendRes.token || backendRes.data?.token;
@@ -58,7 +62,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, onLoginSuccess 
   };
   const handleGoogleLogin = async () => {
     if (Platform.OS === 'android' && !ANDROID_CLIENT_ID) return Alert.alert('Google Login Not Configured','Set EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID in your app env to enable Google login on Android.');
-    try { await promptAsync({ useProxy: Constants.appOwnership === 'expo' }); } catch { Alert.alert("Login Error", "Something went wrong"); }
+    try { await promptAsync(); } catch { Alert.alert("Login Error", "Something went wrong"); }
   };
   return (<Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}><View style={styles.overlay}><View style={styles.modalContent}><TouchableOpacity style={styles.closeButton} onPress={onClose}><Ionicons name="close" size={24} color={Colors.text} /></TouchableOpacity><View style={styles.header}><Ionicons name="person-circle-outline" size={80} color={Colors.primary} /><Text style={styles.title}>Sign in to TubeIndia</Text><Text style={styles.subtitle}>Login with phone and password or continue with Google.</Text></View>{isSignup && <TextInput style={styles.input} placeholder="Name" value={name} onChangeText={setName} />}<TextInput style={styles.input} placeholder="Phone" value={phone} onChangeText={(v) => setPhone(v.replace(/\D/g, '').slice(0, 10))} keyboardType="phone-pad" maxLength={10} /><View style={styles.passwordRow}><TextInput style={[styles.input, styles.passwordInput]} placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} /><TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword((prev) => !prev)}><Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color={Colors.textGray} /></TouchableOpacity></View><TouchableOpacity style={styles.primaryButton} onPress={handlePhoneAuth}><Text style={styles.googleButtonText}>{isSignup ? 'Sign Up' : 'Login'}</Text></TouchableOpacity><TouchableOpacity onPress={() => setIsSignup(!isSignup)}><Text style={styles.switchLineText}>{isSignup ? 'Already have an account? ' : 'New user? '}<Text style={styles.switchLineAction}>{isSignup ? 'Login' : 'Sign up with phone'}</Text></Text></TouchableOpacity><Text style={styles.orText}>or</Text><TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin} disabled={!request}><Ionicons name="logo-google" size={22} color={Colors.white} /><Text style={styles.googleButtonText}>Continue with Google</Text></TouchableOpacity></View></View></Modal>);
 };

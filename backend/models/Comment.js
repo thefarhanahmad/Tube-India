@@ -28,7 +28,17 @@ const commentSchema = new mongoose.Schema({
         type: mongoose.Schema.ObjectId,
         ref: 'User',
       },
-      text: String,
+      text: {
+        type: String,
+        required: true,
+        maxlength: [500, 'Reply cannot be more than 500 characters'],
+      },
+      likes: [
+        {
+          type: mongoose.Schema.ObjectId,
+          ref: 'User',
+        }
+      ],
       createdAt: {
         type: Date,
         default: Date.now,

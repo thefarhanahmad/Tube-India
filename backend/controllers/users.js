@@ -37,6 +37,23 @@ exports.updateChannel = async (req, res, next) => {
   }
 };
 
+exports.getChannelProfile = async (req, res, next) => {
+  try {
+    const channel = await User.findById(req.params.id).select('name avatar channelName about followersCount createdAt');
+    if (!channel) return res.status(404).json({ success: false, message: 'Channel not found' });
+
+    const sort = req.query.filter === 'popular' ? { views: -1, createdAt: -1 } : { createdAt: -1 };
+    const videos = await require('../models/Video').find({ owner: channel._id, visibility: 'public' })
+      .populate('owner', 'name avatar channelName followersCount')
+      .populate('category', 'name')
+      .sort(sort);
+
+    res.status(200).json({ success: true, data: { channel, videos } });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // @desc Get all users
 // @route GET /api/users
 // @access Private/Admin
@@ -111,6 +128,58 @@ exports.getHistory = async (req, res, next) => {
     });
 
     res.status(200).json({ success: true, data: user.watchHistory });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getLikedVideos = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id).populate({
+      path: 'likedVideos',
+      populate: [
+        { path: 'owner', select: 'name channelName avatar' },
+        { path: 'category', select: 'name' },
+      ],
+    });
+    res.status(200).json({ success: true, data: user.likedVideos || [] });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.addSearchHistory = async (req, res, next) => {
+  try {
+    const term = (req.body.term || '').trim();
+    if (!term) return res.status(400).json({ success: false, message: 'Search term is required' });
+    const user = await User.findById(req.user.id);
+    user.searchHistory = (user.searchHistory || []).filter((item) => item.term.toLowerCase() !== term.toLowerCase());
+    user.searchHistory.unshift({ term, createdAt: new Date() });
+    user.searchHistory = user.searchHistory.slice(0, 20);
+    await user.save();
+    res.status(200).json({ success: true, data: user.searchHistory });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getSearchHistory = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id).select('searchHistory');
+    res.status(200).json({ success: true, data: user.searchHistory || [] });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.clearSearchHistory = async (req, res, next) => {
+  try {
+    const term = req.query.term;
+    const update = term
+      ? { $pull: { searchHistory: { term } } }
+      : { $set: { searchHistory: [] } };
+    const user = await User.findByIdAndUpdate(req.user.id, update, { new: true }).select('searchHistory');
+    res.status(200).json({ success: true, data: user.searchHistory || [] });
   } catch (err) {
     next(err);
   }

@@ -6,6 +6,7 @@ import DashboardHome from './pages/DashboardHome';
 import Users from './pages/Users';
 import Categories from './pages/Categories';
 import Videos from './pages/Videos';
+import Reports from './pages/Reports';
 import './App.css';
 
 const PrivateRoute = ({ children }) => {
@@ -23,6 +24,7 @@ function App() {
           <Route path="users" element={<Users />} />
           <Route path="categories" element={<Categories />} />
           <Route path="videos" element={<Videos />} />
+          <Route path="reports" element={<Reports />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -3,6 +3,8 @@ const {
   getComments,
   addComment,
   deleteComment,
+  toggleCommentLike,
+  addReply,
 } = require('../controllers/comment');
 const { protect } = require('../middlewares/auth');
 
@@ -15,6 +17,9 @@ router.route('/')
 
 router.route('/:videoId')
   .get(getComments);
+
+router.post('/:id/like', protect, toggleCommentLike);
+router.post('/:id/replies', protect, addReply);
 
 router.route('/:id')
   .delete(protect, deleteComment);

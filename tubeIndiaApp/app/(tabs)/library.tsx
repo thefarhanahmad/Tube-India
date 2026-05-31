@@ -34,6 +34,7 @@ export default function LibraryScreen() {
   const [history, setHistory] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [myVideos, setMyVideos] = useState<any[]>([]);
+  const [likedVideos, setLikedVideos] = useState<any[]>([]);
   const [loadingMyVideos, setLoadingMyVideos] = useState(false);
   const [playlists, setPlaylists] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -100,10 +101,20 @@ export default function LibraryScreen() {
     }
   };
 
+  const loadLikedVideos = async () => {
+    try {
+      const res = await api.get('/users/liked-videos');
+      if (res.data.success) setLikedVideos(res.data.data || []);
+    } catch (err) {
+      console.error('Failed to load liked videos', err);
+    }
+  };
+
   const loadAllData = async () => {
     loadHistory();
     loadMyVideos();
     loadPlaylists();
+    loadLikedVideos();
   };
 
   const onRefresh = async () => {
@@ -111,7 +122,8 @@ export default function LibraryScreen() {
     await Promise.all([
       loadHistory(),
       loadMyVideos(),
-      loadPlaylists()
+      loadPlaylists(),
+      loadLikedVideos()
     ]);
     setRefreshing(false);
   };
@@ -213,6 +225,27 @@ export default function LibraryScreen() {
             {history.length === 0 && <Text style={{ marginLeft: 15, color: Colors.textGray }}>No history yet</Text>}
           </ScrollView>
         )}
+      </View>
+
+      <View style={styles.divider} />
+
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.headerLeft}>
+            <Ionicons name="thumbs-up-outline" size={24} color={Colors.text} />
+            <Text style={styles.sectionTitle}>Liked Videos</Text>
+          </View>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalList}>
+          {likedVideos.map(item => (
+            <TouchableOpacity key={item._id} style={styles.horizontalItem} onPress={() => router.push(`/video/${item._id}`)}>
+              <Image source={{ uri: item.thumbnail }} style={styles.horizontalThumbnail} />
+              <Text style={styles.horizontalText} numberOfLines={2}>{item.title}</Text>
+              <Text style={styles.horizontalOwner}>{item.owner?.channelName || item.owner?.name}</Text>
+            </TouchableOpacity>
+          ))}
+          {likedVideos.length === 0 && <Text style={{ marginLeft: 15, color: Colors.textGray }}>No liked videos yet</Text>}
+        </ScrollView>
       </View>
 
       <View style={styles.divider} />

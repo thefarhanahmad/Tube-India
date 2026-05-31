@@ -10,6 +10,8 @@ const {
   toggleDislike,
   getMyVideos,
   getFollowedVideos,
+  recordView,
+  reportVideo,
 } = require('../controllers/video');
 const { protect, softProtect } = require('../middlewares/auth');
 const upload = require('../middlewares/multer');
@@ -27,6 +29,8 @@ router.get('/followed', protect, getFollowedVideos);
 
 router.post('/:id/like', protect, toggleLike);
 router.post('/:id/dislike', protect, toggleDislike);
+router.post('/:id/view', softProtect, recordView);
+router.post('/:id/report', protect, reportVideo);
 
 router.post('/upload', protect, upload.fields([
   { name: 'video', maxCount: 1 },
