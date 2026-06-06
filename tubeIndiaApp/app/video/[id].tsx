@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSelector } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
-import { Video, ResizeMode, VideoFullscreenUpdate } from 'expo-av';
+import { Video, ResizeMode, VideoFullscreenUpdate, Audio } from 'expo-av';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { useFocusEffect } from '@react-navigation/native';
 import Colors from '../../constants/Colors';
@@ -31,8 +31,26 @@ export default function VideoScreen() {
   const [isFollowed, setIsFollowed] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [isDisliked, setIsDisliked] = useState(false);
+  const [isFinished, setIsFinished] = useState(false);
 
   useEffect(() => {
+    // Configure audio mode to fix AudioFocusNotAcquiredException
+    const setupAudio = async () => {
+      try {
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          staysActiveInBackground: false,
+          playsInSilentModeIOS: true,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+        });
+      } catch (err) {
+        console.log('Audio setup error:', err);
+      }
+    };
+
+    setupAudio();
+
     if (id) {
       loadVideoData();
     }
@@ -241,6 +259,33 @@ export default function VideoScreen() {
     setPlaylistModalVisible(true);
   };
 
+  const handleNext = () => {
+    if (recommendedVideos.length > 0) {
+      router.push(`/video/${recommendedVideos[0]._id}`);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (recommendedVideos.length > 0) {
+      router.push(`/video/${recommendedVideos[recommendedVideos.length - 1]._id}`);
+    }
+  };
+
+  const handlePlaybackStatusUpdate = (status: any) => {
+    if (status.didJustFinish) {
+      setIsFinished(true);
+    }
+    
+    if (status.shouldPlay && isFinished) {
+      setIsFinished(false);
+      videoRef.current?.replayAsync().catch(() => {});
+    }
+
+    if (status.positionMillis < (status.durationMillis || 0) - 2000) {
+       if (isFinished) setIsFinished(false);
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -270,6 +315,8 @@ export default function VideoScreen() {
         useNativeControls
         style={styles.videoPlayer}
         onFullscreenUpdate={handleFullscreenUpdate}
+        onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
+        onError={(err) => console.log('Video error:', err)}
       />
 
       <FlatList
