@@ -37,12 +37,16 @@ const isNineBySixteen = (aspectRatio) => {
   return Math.abs(aspectRatio - target) <= 0.035;
 };
 
+const applyVideoTypeFilter = (query, type) => {
+  if (type === 'short') query.isShort = true;
+  if (type === 'video' || type === 'long') query.isShort = { $ne: true };
+  return query;
+};
+
 const getVideoQuery = (req, onlyPublic = false) => {
   const query = { visibility: 'public' };
   if (req.query.owner) query.owner = req.query.owner;
-  if (req.query.type === 'short') query.isShort = true;
-  if (req.query.type === 'video' || req.query.type === 'long') query.isShort = false;
-  return query;
+  return applyVideoTypeFilter(query, req.query.type);
 };
 
 const getSort = (sort) => {
@@ -161,9 +165,7 @@ exports.getFollowedVideos = async (req, res, next) => {
   try {
     const followings = await Follower.find({ follower: req.user.id });
     const channelIds = followings.map((f) => f.channel);
-    const query = { owner: { $in: channelIds }, visibility: 'public' };
-    if (req.query.type === 'short') query.isShort = true;
-    if (req.query.type === 'video' || req.query.type === 'long') query.isShort = false;
+    const query = applyVideoTypeFilter({ owner: { $in: channelIds }, visibility: 'public' }, req.query.type);
 
     const videos = await Video.find(query)
       .populate('owner', 'name avatar channelName followersCount')
@@ -179,7 +181,8 @@ exports.getFollowedVideos = async (req, res, next) => {
 
 exports.getMyVideos = async (req, res, next) => {
   try {
-    const videos = await Video.find({ owner: req.user.id })
+    const query = applyVideoTypeFilter({ owner: req.user.id }, req.query.type);
+    const videos = await Video.find(query)
       .populate('owner', 'name avatar channelName')
       .populate('category', 'name')
       .sort('-createdAt');
@@ -278,7 +281,6 @@ exports.uploadVideo = async (req, res, next) => {
       thumbnail: thumbnail || FALLBACK_THUMBNAIL,
       duration: videoResult.duration || 0,
       isShort: uploadType === 'short',
-      contentType: uploadType,
       aspectRatio,
       owner: req.user.id,
       visibility: req.body.visibility || (hasOnlyVideo ? 'private' : 'public'),

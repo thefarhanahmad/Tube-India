@@ -115,7 +115,7 @@ const PostCard = ({ post }: { post: any }) => {
           <ScrollView>
             <CommentList 
               postId={post._id} 
-              onCommentAdded={() => setCommentsCount(prev => prev + 1)}
+              onCommentAdded={() => setCommentsCount((prev: number) => prev + 1)}
               isAuthenticated={isAuthenticated}
               onAuthRequired={() => setAuthModalVisible(true)}
             />

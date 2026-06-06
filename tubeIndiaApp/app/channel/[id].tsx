@@ -21,29 +21,24 @@ export default function ChannelScreen() {
   const [channel, setChannel] = useState<any>(null);
   const [videos, setVideos] = useState<any[]>([]);
   const [posts, setPosts] = useState<any[]>([]);
-  const [filter, setFilter] = useState<'all' | 'popular' | 'shorts'>('all');
+  const [filter, setFilter] = useState<'videos' | 'shorts' | 'posts'>('videos');
   const [error, setError] = useState<string | null>(null);
   const [authModalVisible, setAuthModalVisible] = useState(false);
 
   useEffect(() => {
-    loadChannel();
+    loadChannel(filter);
   }, [id, filter]);
 
-  const loadChannel = async () => {
+  const loadChannel = async (activeFilter = filter) => {
     if (!id) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get(`/channels/${id}`, { params: { filter } });
+      const res = await api.get(`/channels/${id}`, { params: { filter: activeFilter } });
       if (res.data.success) {
         setChannel(res.data.data.channel);
-        setVideos(res.data.data.videos || []);
-        if (filter === 'all') {
-          const postsRes = await api.get('/posts', { params: { owner: id } });
-          setPosts(postsRes.data.success ? postsRes.data.data || [] : []);
-        } else {
-          setPosts([]);
-        }
+        setVideos(activeFilter === 'posts' ? [] : res.data.data.videos || []);
+        setPosts(activeFilter === 'posts' ? res.data.data.posts || [] : []);
         return;
       }
       throw new Error('Channel not found');
@@ -92,6 +87,16 @@ export default function ChannelScreen() {
     }
   };
 
+  const isOwner = user?._id === id;
+  const tabItems = [
+    { key: 'videos', label: 'Videos', icon: 'play-outline' },
+    { key: 'shorts', label: 'Shorts', icon: 'phone-portrait-outline' },
+    { key: 'posts', label: 'Posts', icon: 'document-text-outline' },
+  ] as const;
+  const content = filter === 'posts'
+    ? posts.map((item) => ({ ...item, itemType: 'post' }))
+    : videos.map((item) => ({ ...item, itemType: 'video' }));
+
   if (loading && !channel) {
     return <View style={styles.center}><ActivityIndicator color={Colors.primary} size="large" /></View>;
   }
@@ -100,7 +105,7 @@ export default function ChannelScreen() {
     return (
       <View style={styles.center}>
         <Text style={styles.errorTitle}>{error}</Text>
-        <TouchableOpacity style={styles.retryBtn} onPress={loadChannel}>
+        <TouchableOpacity style={styles.retryBtn} onPress={() => loadChannel(filter)}>
           <Text style={styles.retryText}>Retry</Text>
         </TouchableOpacity>
       </View>
@@ -111,10 +116,7 @@ export default function ChannelScreen() {
     <View style={styles.container}>
       <AuthModal visible={authModalVisible} onClose={() => setAuthModalVisible(false)} />
       <FlatList
-        data={[
-          ...(filter === 'all' ? posts.map((item) => ({ ...item, itemType: 'post' })) : []),
-          ...videos.map((item) => ({ ...item, itemType: 'video' })),
-        ]}
+        data={content}
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => item.itemType === 'post' ? <PostCard post={item} /> : <VideoCard video={item} />}
         ListHeaderComponent={
@@ -125,9 +127,15 @@ export default function ChannelScreen() {
               </TouchableOpacity>
               <Image source={{ uri: channel?.avatar || FALLBACK_AVATAR }} style={styles.avatar} />
               <Text style={styles.name}>{channel?.channelName || channel?.name || 'Channel'}</Text>
-              <Text style={styles.meta}>{channel?.followersCount || 0} followers</Text>
+              <Text style={styles.username}>@{channel?.name || 'user'}</Text>
+              <Text style={styles.meta}>{channel?.followersCount || 0} subscribers</Text>
               
-              {user?._id !== id && (
+              {isOwner ? (
+                <TouchableOpacity style={styles.editBtn} onPress={() => router.push('/edit-channel')}>
+                  <Ionicons name="create-outline" size={18} color={Colors.white} />
+                  <Text style={styles.editBtnText}>Edit Channel</Text>
+                </TouchableOpacity>
+              ) : (
                 <TouchableOpacity 
                   style={[styles.followBtn, channel?.isFollowing && styles.followedBtn]} 
                   onPress={handleFollow}
@@ -141,23 +149,28 @@ export default function ChannelScreen() {
               {!!channel?.about && <Text style={styles.about}>{channel.about}</Text>}
             </View>
             <View style={styles.filters}>
-              {(['all', 'popular', 'shorts'] as const).map((item) => (
+              {tabItems.map((item) => (
                 <TouchableOpacity
-                  key={item}
-                  style={[styles.filterBtn, filter === item && styles.filterBtnActive]}
-                  onPress={() => setFilter(item)}
+                  key={item.key}
+                  style={[styles.filterBtn, filter === item.key && styles.filterBtnActive]}
+                  onPress={() => setFilter(item.key)}
                 >
-                  <Text style={[styles.filterText, filter === item && styles.filterTextActive]}>
-                    {item === 'all' ? 'All' : item === 'popular' ? 'Popular' : item === 'shorts' ? 'Shorts' : item}
+                  <Ionicons
+                    name={item.icon}
+                    size={18}
+                    color={filter === item.key ? Colors.white : Colors.text}
+                  />
+                  <Text style={[styles.filterText, filter === item.key && styles.filterTextActive]}>
+                    {item.label}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
           </View>
         }
-        ListEmptyComponent={!loading ? <Text style={styles.empty}>No content found</Text> : null}
+        ListEmptyComponent={!loading ? <Text style={styles.empty}>No {filter} found</Text> : null}
         refreshing={loading}
-        onRefresh={loadChannel}
+        onRefresh={() => loadChannel(filter)}
       />
     </View>
   );
@@ -170,6 +183,7 @@ const styles = StyleSheet.create({
   backBtn: { position: 'absolute', left: 16, top: 52, padding: 4 },
   avatar: { width: 86, height: 86, borderRadius: 43, backgroundColor: Colors.border },
   name: { marginTop: 12, fontSize: 22, fontWeight: 'bold', color: Colors.text },
+  username: { marginTop: 3, color: Colors.textGray, fontSize: 14 },
   meta: { marginTop: 4, color: Colors.textGray, marginBottom: 15 },
   followBtn: {
     backgroundColor: Colors.primary,
@@ -189,9 +203,24 @@ const styles = StyleSheet.create({
   followedBtnText: {
     color: Colors.text,
   },
+  editBtn: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 25,
+    marginBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  editBtnText: {
+    color: Colors.white,
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
   about: { marginTop: 10, color: Colors.textGray, textAlign: 'center', lineHeight: 19 },
   filters: { flexDirection: 'row', padding: 12, gap: 8, backgroundColor: Colors.white },
-  filterBtn: { flex: 1, borderWidth: 1, borderColor: Colors.border, borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
+  filterBtn: { flex: 1, borderWidth: 1, borderColor: Colors.border, borderRadius: 8, paddingVertical: 10, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 },
   filterBtnActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   filterText: { color: Colors.text, fontWeight: '600' },
   filterTextActive: { color: Colors.white },

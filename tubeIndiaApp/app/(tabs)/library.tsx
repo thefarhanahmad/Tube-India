@@ -79,7 +79,7 @@ export default function LibraryScreen() {
   const loadMyVideos = async () => {
     setLoadingMyVideos(true);
     try {
-      const res = await api.get('/videos/me');
+      const res = await api.get('/videos/me', { params: { type: 'video' } });
       if (res.data.success) {
         setMyVideos(res.data.data || []);
       }
@@ -195,6 +195,12 @@ export default function LibraryScreen() {
         )}
 
         <View style={styles.headerButtons}>
+          {user?._id && (
+            <TouchableOpacity style={styles.viewChannelBtn} onPress={() => router.push(`/channel/${user._id}`)}>
+              <Ionicons name="person-circle-outline" size={17} color={Colors.white} />
+              <Text style={styles.viewChannelBtnText}>View Channel</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity style={styles.editBtn} onPress={() => router.push('/edit-channel')}>
             <Text style={styles.editBtnText}>{user?.channelName ? 'Edit Channel' : 'Create Channel'}</Text>
           </TouchableOpacity>
@@ -386,6 +392,24 @@ const styles = StyleSheet.create({
   },
   headerButtons: {
     marginTop: 15,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  viewChannelBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: 20,
+    paddingVertical: 7,
+    paddingHorizontal: 15,
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  viewChannelBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.white,
   },
   editBtn: {
     borderWidth: 1,

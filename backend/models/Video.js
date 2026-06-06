@@ -62,11 +62,6 @@ const videoSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  contentType: {
-    type: String,
-    enum: ['video', 'short'],
-    default: 'video',
-  },
   aspectRatio: {
     type: Number,
     default: null,

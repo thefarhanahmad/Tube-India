@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Video = require('../models/Video');
+const Post = require('../models/Post');
 const Follower = require('../models/Follower');
 const { deleteFromCloudinary } = require('../utils/cloudinary');
 
@@ -55,17 +56,35 @@ exports.getChannelProfile = async (req, res, next) => {
       channel.isFollowing = false;
     }
 
-    const filter = (req.query.filter || 'all').toLowerCase();
-    const query = { owner: channel._id, visibility: 'public' };
-    if (filter === 'shorts') query.isShort = true;
-    const sort = filter === 'popular' ? { views: -1, createdAt: -1 } : { createdAt: -1 };
+    const filter = (req.query.filter || 'videos').toLowerCase();
+    const isOwner = req.user && req.user.id.toString() === channel._id.toString();
+    const isAdmin = req.user && req.user.role === 'admin';
+    const visibilityQuery = isOwner || isAdmin
+      ? {}
+      : { $or: [{ visibility: 'public' }, { visibility: { $exists: false } }] };
+    const videoQuery = { owner: channel._id, ...visibilityQuery };
+    const postQuery = { owner: channel._id, ...visibilityQuery };
+    let videos = [];
+    let posts = [];
 
-    const videos = await Video.find(query)
-      .populate('owner', 'name avatar channelName followersCount')
-      .populate('category', 'name')
-      .sort(sort);
+    if (filter === 'posts') {
+      posts = await Post.find(postQuery)
+        .populate('owner', 'name avatar channelName')
+        .sort('-createdAt');
+    } else {
+      if (filter === 'shorts') {
+        videoQuery.isShort = true;
+      } else {
+        videoQuery.isShort = { $ne: true };
+      }
 
-    res.status(200).json({ success: true, data: { channel, videos } });
+      videos = await Video.find(videoQuery)
+        .populate('owner', 'name avatar channelName followersCount')
+        .populate('category', 'name')
+        .sort('-createdAt');
+    }
+
+    res.status(200).json({ success: true, data: { channel, videos, posts } });
   } catch (err) {
     next(err);
   }
