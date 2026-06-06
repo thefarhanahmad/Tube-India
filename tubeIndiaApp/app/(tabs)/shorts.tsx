@@ -11,6 +11,7 @@ import AuthModal from '../../components/AuthModal';
 import CommentList from '../../components/CommentList';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { formatViews } from '../../utils/formatDate';
 
 const FALLBACK_AVATAR = 'https://via.placeholder.com/80x80.png?text=User';
 
@@ -356,11 +357,11 @@ export default function ShortsScreen() {
               <View style={styles.rightActions}>
                 <TouchableOpacity style={styles.actionButton} onPress={() => handleLike(item._id)}>
                   <Ionicons name={item.isLiked ? "thumbs-up" : "thumbs-up-outline"} size={32} color={item.isLiked ? Colors.primary : Colors.white} />
-                  <Text style={styles.actionText}>{item.likes.length}</Text>
+                  <Text style={styles.actionText}>{formatViews(item.likes.length)}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.actionButton} onPress={() => handleCommentClick(item._id)}>
                   <Ionicons name="chatbubble-ellipses" size={32} color={Colors.white} />
-                  <Text style={styles.actionText}>{item.commentsCount}</Text>
+                  <Text style={styles.actionText}>{formatViews(item.commentsCount)}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.actionButton} onPress={() => handleShare(item)}>
                   <Ionicons name="share-social" size={32} color={Colors.white} />

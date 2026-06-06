@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import Colors from '../constants/Colors';
 import api from '../services/api';
-import { formatTimeAgo } from '../utils/formatDate';
+import { formatTimeAgo, formatViews } from '../utils/formatDate';
 
 export default function YourVideosScreen() {
   const router = useRouter();
@@ -119,7 +119,7 @@ export default function YourVideosScreen() {
         <View style={styles.videoInfo}>
           <Text style={styles.videoTitle} numberOfLines={2}>{item.title}</Text>
           <Text style={styles.videoMeta}>
-            {item.views} views • {formatTimeAgo(item.createdAt)}
+            {formatViews(item.views || 0)} views • {formatTimeAgo(item.createdAt)}
           </Text>
           <TouchableOpacity style={styles.menuDots} onPress={(e) => {
             e.stopPropagation();
@@ -142,7 +142,7 @@ export default function YourVideosScreen() {
           <Image source={{ uri: item.thumbnail }} style={styles.shortGridThumbnail} />
           <View style={styles.shortViewsBadge}>
             <Ionicons name="play-outline" size={10} color={Colors.white} />
-            <Text style={styles.shortViewsText}>{item.views}</Text>
+            <Text style={styles.shortViewsText}>{formatViews(item.views || 0)}</Text>
           </View>
           <TouchableOpacity style={styles.gridMenuDots} onPress={(e) => {
             e.stopPropagation();

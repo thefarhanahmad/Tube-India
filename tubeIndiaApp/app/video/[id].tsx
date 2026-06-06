@@ -13,7 +13,7 @@ import VideoCard from '../../components/VideoCard';
 import CommentList from '../../components/CommentList';
 import AuthModal from '../../components/AuthModal';
 import PlaylistModal from '../../components/PlaylistModal';
-import { formatTimeAgo } from '../../utils/formatDate';
+import { formatTimeAgo, formatViews } from '../../utils/formatDate';
 
 const FALLBACK_IMAGE = 'https://via.placeholder.com/80x80.png?text=User';
 
@@ -324,7 +324,7 @@ export default function VideoScreen() {
           <View style={styles.contentContainer}>
             <Text style={styles.title}>{video.title}</Text>
             <Text style={styles.metadata}>
-              {video.views} views • {formatTimeAgo(video.createdAt)}
+              {formatViews(video.views || 0)} views • {formatTimeAgo(video.createdAt)}
             </Text>
 
             <View style={styles.actionButtons}>
@@ -335,7 +335,7 @@ export default function VideoScreen() {
                   color={isLiked ? Colors.primary : Colors.text} 
                 />
                 <Text style={[styles.actionText, isLiked && { color: Colors.primary }]}>
-                  {video.likes?.length || 0}
+                  {formatViews(video.likes?.length || 0)}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.actionButton} onPress={handleDislike}>
@@ -364,7 +364,7 @@ export default function VideoScreen() {
                 <Image source={{ uri: video?.owner?.avatar || FALLBACK_IMAGE }} style={styles.avatar} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.channelName} numberOfLines={1}>{video?.owner?.channelName || video?.owner?.name || 'Unknown channel'}</Text>
-                  <Text style={styles.followerCount}>{video?.owner?.followersCount || 0} followers</Text>
+                  <Text style={styles.followerCount}>{formatViews(video?.owner?.followersCount || 0)} followers</Text>
                 </View>
               </TouchableOpacity>
               {video?.owner?._id !== user?._id && (

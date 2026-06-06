@@ -3,7 +3,7 @@ import { View, Text, Image, StyleSheet, TouchableOpacity, Modal, TextInput, Aler
 import { Ionicons } from '@expo/vector-icons';
 import Colors from '../constants/Colors';
 import { useRouter } from 'expo-router';
-import { formatTimeAgo } from '../utils/formatDate';
+import { formatTimeAgo, formatViews } from '../utils/formatDate';
 import api from '../services/api';
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
@@ -40,12 +40,6 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onMenuPress, onPlaylistPre
   const [menuVisible, setMenuVisible] = useState(false);
 
   const isOwner = user?._id === video.owner?._id;
-
-  const formatViews = (views: number) => {
-    if (views >= 1000000) return `${(views / 1000000).toFixed(1)}M views`;
-    if (views >= 1000) return `${(views / 1000).toFixed(1)}K views`;
-    return `${views} views`;
-  };
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);

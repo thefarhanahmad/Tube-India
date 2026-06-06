@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import Colors from '../constants/Colors';
 import api from '../services/api';
-import { formatTimeAgo } from '../utils/formatDate';
+import { formatTimeAgo, formatViews } from '../utils/formatDate';
 
 export default function LikedVideosScreen() {
   const router = useRouter();
@@ -55,7 +55,7 @@ export default function LikedVideosScreen() {
             {item.owner?.channelName || item.owner?.name}
           </Text>
           <Text style={styles.videoMeta}>
-            {item.views} views • {formatTimeAgo(item.createdAt)}
+            {formatViews(item.views || 0)} views • {formatTimeAgo(item.createdAt)}
           </Text>
         </View>
       </TouchableOpacity>

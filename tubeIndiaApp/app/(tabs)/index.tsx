@@ -13,6 +13,7 @@ import { RootState } from '../../redux/store';
 import api from '../../services/api';
 import AuthModal from '../../components/AuthModal';
 import PlaylistModal from '../../components/PlaylistModal';
+import { formatViews } from '../../utils/formatDate';
 
 const SAMPLE_VIDEOS = [
   {
@@ -201,7 +202,7 @@ export default function HomeScreen() {
           >
             <Image source={{ uri: item.thumbnail }} style={styles.shortThumbnail} />
             <Text style={styles.shortTitle} numberOfLines={1} ellipsizeMode="tail">{item.title}</Text>
-            <Text style={styles.shortViews}>{item.views} views</Text>
+            <Text style={styles.shortViews}>{formatViews(item.views || 0)} views</Text>
           </TouchableOpacity>
         ))}
       </View>

@@ -8,6 +8,7 @@ import AuthModal from '../../components/AuthModal';
 import api, { setAuthToken } from '../../services/api';
 import { useRouter, useNavigation, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { formatViews } from '../../utils/formatDate';
 
 const getAvatarUri = (avatar?: string) => {
   if (!avatar) return null;
@@ -86,6 +87,7 @@ export default function LibraryScreen() {
     } catch (err) {
       console.error('Failed to load your videos', err);
     } finally {
+      setMyVideos([]);
       setLoadingMyVideos(false);
     }
   };
@@ -294,7 +296,7 @@ export default function LibraryScreen() {
                 <View style={styles.horizontalInfo}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.horizontalText} numberOfLines={2}>{item.title}</Text>
-                    <Text style={styles.horizontalOwner}>{item.views} views</Text>
+                    <Text style={styles.horizontalOwner}>{formatViews(item.views || 0)} views</Text>
                   </View>
                   <TouchableOpacity 
                     style={styles.moreBtn} 

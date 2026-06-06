@@ -1,3 +1,13 @@
+export const formatViews = (views: number): string => {
+  if (views >= 1000000) {
+    return (views / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+  }
+  if (views >= 1000) {
+    return (views / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+  }
+  return views.toString();
+};
+
 export const formatTimeAgo = (date: string | Date): string => {
   const now = new Date();
   const then = new Date(date);

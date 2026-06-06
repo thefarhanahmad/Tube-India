@@ -18,7 +18,7 @@ export default function ChannelScreen() {
   const params = useLocalSearchParams<{ id?: string | string[] }>();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const router = useRouter();
-
+  
   const [loading, setLoading] = useState(true);
   const [channel, setChannel] = useState<any>(null);
   const [videos, setVideos] = useState<any[]>([]);
@@ -37,8 +37,8 @@ export default function ChannelScreen() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get(`/channels/${id}`, {
-        params: { filter: activeFilter, sort: activeSort }
+      const res = await api.get(`/channels/${id}`, { 
+        params: { filter: activeFilter, sort: activeSort } 
       });
       if (res.data.success) {
         setChannel(res.data.data.channel);
@@ -106,8 +106,8 @@ export default function ChannelScreen() {
 
   const renderHorizontalVideoCard = (item: any) => {
     return (
-      <TouchableOpacity
-        style={styles.horizontalCard}
+      <TouchableOpacity 
+        style={styles.horizontalCard} 
         onPress={() => router.push(`/video/${item._id}`)}
         activeOpacity={0.7}
       >
@@ -132,8 +132,8 @@ export default function ChannelScreen() {
 
   const renderShortGridItem = (item: any) => {
     return (
-      <TouchableOpacity
-        style={styles.shortGridItem}
+      <TouchableOpacity 
+        style={styles.shortGridItem} 
         onPress={() => router.push({ pathname: '/shorts', params: { initialShortId: item._id } })}
         activeOpacity={0.9}
       >
@@ -185,7 +185,7 @@ export default function ChannelScreen() {
   return (
     <View style={styles.container}>
       <AuthModal visible={authModalVisible} onClose={() => setAuthModalVisible(false)} />
-
+      
       <FlatList
         key={filter === 'shorts' ? 'shorts-grid' : 'videos-list'}
         data={content}
@@ -204,7 +204,7 @@ export default function ChannelScreen() {
               <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
                 <Ionicons name="arrow-back" size={24} color={Colors.white} />
               </TouchableOpacity>
-
+              
               {channel?.coverImage ? (
                 <Image source={{ uri: channel.coverImage }} style={styles.coverImage} />
               ) : (
@@ -217,14 +217,14 @@ export default function ChannelScreen() {
               <View style={styles.avatarWrapper}>
                 <Image source={{ uri: channel?.avatar || FALLBACK_AVATAR }} style={styles.avatar} />
               </View>
-
+              
               <View style={styles.identityContainer}>
                 <Text style={styles.name} numberOfLines={1}>
                   {channel?.channelName || channel?.name || 'Channel'}
                 </Text>
                 <Text style={styles.handle}>@{channel?.name || 'user'}</Text>
                 <Text style={styles.subscribers}>{channel?.followersCount || 0} subscribers</Text>
-
+                
                 {!!channel?.about && (
                   <TouchableOpacity activeOpacity={0.7} style={styles.aboutContainer} onPress={() => Alert.alert('About', channel.about)}>
                     <Text style={styles.aboutPreview} numberOfLines={2}>
@@ -234,15 +234,15 @@ export default function ChannelScreen() {
                   </TouchableOpacity>
                 )}
               </View>
-
+              
               <View style={styles.actionRow}>
                 {isOwner ? (
                   <TouchableOpacity style={styles.editBtn} onPress={() => router.push('/edit-channel')}>
                     <Text style={styles.editBtnText}>Edit Channel</Text>
                   </TouchableOpacity>
                 ) : (
-                  <TouchableOpacity
-                    style={[styles.followBtn, channel?.isFollowing && styles.followedBtn]}
+                  <TouchableOpacity 
+                    style={[styles.followBtn, channel?.isFollowing && styles.followedBtn]} 
                     onPress={handleFollow}
                   >
                     <Text style={[styles.followBtnText, channel?.isFollowing && styles.followedBtnText]}>
@@ -255,7 +255,7 @@ export default function ChannelScreen() {
                 </TouchableOpacity>
               </View>
             </View>
-
+            
             {/* Tabs & Filters */}
             <View style={styles.tabsSection}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsScroll}>
@@ -310,20 +310,20 @@ export default function ChannelScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.white },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-
+  
   // Header / Banner
   header: { backgroundColor: Colors.white, position: 'relative' },
-  backBtn: {
-    position: 'absolute',
-    left: 16,
+  backBtn: { 
+    position: 'absolute', 
+    left: 16, 
     top: 40,
     width: 30,
     height: 30,
     borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.4)', 
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 20
+    zIndex: 20 
   },
   coverImage: {
     width: '100%',
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
     aspectRatio: 20 / 9,
     backgroundColor: '#E5E7EB',
   },
-
+  
   // Profile Info
   profileSection: {
     paddingHorizontal: 16,
@@ -354,24 +354,24 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 4,
   },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.border
+  avatar: { 
+    width: 80, 
+    height: 80, 
+    borderRadius: 40, 
+    backgroundColor: Colors.border 
   },
   identityContainer: {
     width: '100%',
   },
-  name: {
+  name: { 
     fontSize: 20,
-    fontWeight: '800',
+    fontWeight: '800', 
     color: Colors.text,
     letterSpacing: -0.5,
   },
-  handle: {
+  handle: { 
     fontSize: 12,
-    color: Colors.text,
+    color: Colors.text, 
     marginTop: 4,
     fontWeight: '600',
   },
@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
   },
   followBtn: {
     flex: 1,
-    backgroundColor: Colors.text,
+    backgroundColor: Colors.text, 
     height: 44,
     borderRadius: 22,
     alignItems: 'center',
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
+  
   // Tabs
   tabsSection: {
     borderBottomWidth: 1,
@@ -613,9 +613,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingTop: 60,
   },
-  empty: {
-    textAlign: 'center',
-    color: Colors.textGray,
+  empty: { 
+    textAlign: 'center', 
+    color: Colors.textGray, 
     marginTop: 16,
     fontSize: 16,
     fontWeight: '500',
