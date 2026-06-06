@@ -328,8 +328,6 @@ export default function LibraryScreen() {
       </View>
     </ScrollView>
   );
-}
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -340,6 +338,67 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
+    backgroundColor: '#F9FAFB',
+  },
+  loginCard: {
+    backgroundColor: Colors.white,
+    padding: 32,
+    borderRadius: 24,
+    alignItems: 'center',
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  iconCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: Colors.primary + '10',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  loginTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: Colors.text,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  loginSubtitle: {
+    fontSize: 15,
+    color: Colors.textGray,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 32,
+    paddingHorizontal: 10,
+  },
+  mainLoginBtn: {
+    backgroundColor: Colors.primary,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 999,
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  mainLoginBtnText: {
+    color: Colors.white,
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  secondaryBtn: {
+    paddingVertical: 12,
+  },
+  secondaryBtnText: {
+    color: Colors.textGray,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  scrollContent: {
     backgroundColor: '#F9FAFB',
   },
   loginCard: {

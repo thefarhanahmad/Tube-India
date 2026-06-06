@@ -176,15 +176,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   loginTitle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: Colors.primary + '10',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 24,
-  },
-  loginTitle: {
     fontSize: 26,
     fontWeight: '800',
     color: Colors.text,
