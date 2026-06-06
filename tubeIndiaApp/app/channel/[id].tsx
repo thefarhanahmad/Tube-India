@@ -8,7 +8,7 @@ import PostCard from '../../components/PostCard';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import AuthModal from '../../components/AuthModal';
-import { formatTimeAgo } from '../../utils/formatDate';
+import { formatTimeAgo, formatViews } from '../../utils/formatDate';
 
 const { width } = Dimensions.get('window');
 const FALLBACK_AVATAR = 'https://via.placeholder.com/100x100.png?text=User';
