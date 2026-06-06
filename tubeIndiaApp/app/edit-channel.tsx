@@ -37,17 +37,26 @@ export default function EditChannelScreen() {
   const [loading, setLoading] = useState(false);
 
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
+    // Check permission first to prevent UI hang
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'We need access to your photos to update your avatar.');
+      return;
+    }
 
-    if (!result.canceled) {
-      setAvatar(result.assets[0].uri);
-      // In a real app, we would upload to Cloudinary here and get URL
-      // For now we'll just keep the local URI or assume it's already a URL
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7, // Lower quality prevents system editor crashes on some devices
+      });
+
+      if (!result.canceled) {
+        setAvatar(result.assets[0].uri);
+      }
+    } catch (err) {
+      Alert.alert('Error', 'Failed to pick or crop image. Please try again.');
     }
   };
 

@@ -119,47 +119,77 @@ export default function UploadScreen() {
 
   const pickVideo = async () => {
     if (editId) return; // Cannot change video on edit
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['videos'],
-      allowsEditing: true,
-      quality: 1,
-    });
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'We need access to your files to upload videos.');
+      return;
+    }
 
-    if (!result.canceled) {
-      if (uploadType === 'short') {
-        const asset: any = result.assets[0];
-        if (asset.width && asset.height && Math.abs((asset.width / asset.height) - (9 / 16)) > 0.035) {
-          Alert.alert('Invalid short', 'Shorts must be portrait 9:16 videos.');
-          return;
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+        allowsEditing: true,
+        quality: 0.8, // Better performance for large videos
+      });
+
+      if (!result.canceled) {
+        if (uploadType === 'short') {
+          const asset: any = result.assets[0];
+          if (asset.width && asset.height && Math.abs((asset.width / asset.height) - (9 / 16)) > 0.035) {
+            Alert.alert('Invalid short', 'Shorts must be portrait 9:16 videos.');
+            return;
+          }
         }
+        setVideo(result.assets[0]);
       }
-      setVideo(result.assets[0]);
+    } catch (err) {
+      Alert.alert('Error', 'Failed to pick video.');
     }
   };
 
   const pickPostImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      quality: 1,
-    });
-    if (!result.canceled) {
-      setPostImage(result.assets[0]);
-      setPostImageChanged(true);
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'We need access to your photos to create a post.');
+      return;
+    }
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.7, // Lower quality prevents system editor crashes
+      });
+      if (!result.canceled) {
+        setPostImage(result.assets[0]);
+        setPostImageChanged(true);
+      }
+    } catch (err) {
+      Alert.alert('Error', 'Failed to pick or crop image.');
     }
   };
 
   const pickThumbnail = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [16, 9],
-      quality: 1,
-    });
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'We need access to your photos to set a thumbnail.');
+      return;
+    }
 
-    if (!result.canceled) {
-      setThumbnail(result.assets[0]);
-      setThumbnailChanged(true);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 0.7, // Lower quality prevents system editor crashes
+      });
+
+      if (!result.canceled) {
+        setThumbnail(result.assets[0]);
+        setThumbnailChanged(true);
+      }
+    } catch (err) {
+      Alert.alert('Error', 'Failed to pick or crop thumbnail.');
     }
   };
 
