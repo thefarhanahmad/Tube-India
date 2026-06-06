@@ -16,11 +16,11 @@ const fileFilter = (req, file, cb) => {
     } else {
       cb(new Error('Please upload an image file'), false);
     }
-  } else if (file.fieldname === 'avatar') {
+  } else if (file.fieldname === 'avatar' || file.fieldname === 'coverImage') {
     if (file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {
-      cb(new Error('Please upload an image profile picture'), false);
+      cb(new Error('Please upload an image for profile or cover'), false);
     }
   }
 };

@@ -106,32 +106,36 @@ const cloudinary = require('cloudinary').v2;
 // @access  Private
 exports.updateChannel = async (req, res, next) => {
   try {
-    console.log('Update Channel request received:', req.body);
     const { name, channelName, about } = req.body;
     let avatar = normalizeAvatar(req.body.avatar);
+    let coverImage = req.body.coverImage;
 
-    if (req.file) {
-      console.log('File detected, uploading to Cloudinary...');
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: 'tubeindia/avatars',
-      });
-      console.log('Cloudinary upload success:', result.secure_url);
-      avatar = result.secure_url;
+    if (req.files) {
+      if (req.files.avatar && req.files.avatar[0]) {
+        const result = await cloudinary.uploader.upload(req.files.avatar[0].path, {
+          folder: 'tubeindia/avatars',
+        });
+        avatar = result.secure_url;
+      }
+      if (req.files.coverImage && req.files.coverImage[0]) {
+        const result = await cloudinary.uploader.upload(req.files.coverImage[0].path, {
+          folder: 'tubeindia/covers',
+        });
+        coverImage = result.secure_url;
+      }
     }
 
     const user = await User.findByIdAndUpdate(
       req.user.id,
-      { name, channelName, about, avatar },
+      { name, channelName, about, avatar, coverImage },
       { new: true, runValidators: true }
     );
 
-    console.log('User updated successfully');
     res.status(200).json({
       success: true,
       data: user,
     });
   } catch (err) {
-    console.error('Update Channel Error:', err);
     next(err);
   }
 };

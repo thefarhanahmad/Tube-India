@@ -189,30 +189,40 @@ export default function ChannelScreen() {
           <View>
             <View style={styles.header}>
               <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                <Ionicons name="arrow-back" size={24} color={Colors.text} />
+                <Ionicons name="arrow-back" size={24} color={Colors.white} style={styles.backIconShadow} />
               </TouchableOpacity>
-              <Image source={{ uri: channel?.avatar || FALLBACK_AVATAR }} style={styles.avatar} />
-              <Text style={styles.name}>{channel?.channelName || channel?.name || 'Channel'}</Text>
-              <Text style={styles.username}>@{channel?.name || 'user'}</Text>
-              <Text style={styles.metaText}>{channel?.followersCount || 0} subscribers</Text>
               
-              {isOwner ? (
-                <TouchableOpacity style={styles.editBtn} onPress={() => router.push('/edit-channel')}>
-                  <Ionicons name="create-outline" size={18} color={Colors.white} />
-                  <Text style={styles.editBtnText}>Edit Channel</Text>
-                </TouchableOpacity>
+              {/* Cover Image */}
+              {channel?.coverImage ? (
+                <Image source={{ uri: channel.coverImage }} style={styles.coverImage} />
               ) : (
-                <TouchableOpacity 
-                  style={[styles.followBtn, channel?.isFollowing && styles.followedBtn]} 
-                  onPress={handleFollow}
-                >
-                  <Text style={[styles.followBtnText, channel?.isFollowing && styles.followedBtnText]}>
-                    {channel?.isFollowing ? 'Following' : 'Follow'}
-                  </Text>
-                </TouchableOpacity>
+                <View style={styles.coverPlaceholder} />
               )}
+              
+              <View style={styles.profileInfoContainer}>
+                <Image source={{ uri: channel?.avatar || FALLBACK_AVATAR }} style={styles.avatar} />
+                <Text style={styles.name}>{channel?.channelName || channel?.name || 'Channel'}</Text>
+                <Text style={styles.username}>@{channel?.name || 'user'}</Text>
+                <Text style={styles.metaText}>{channel?.followersCount || 0} subscribers</Text>
+                
+                {isOwner ? (
+                  <TouchableOpacity style={styles.editBtn} onPress={() => router.push('/edit-channel')}>
+                    <Ionicons name="create-outline" size={18} color={Colors.white} />
+                    <Text style={styles.editBtnText}>Edit Channel</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity 
+                    style={[styles.followBtn, channel?.isFollowing && styles.followedBtn]} 
+                    onPress={handleFollow}
+                  >
+                    <Text style={[styles.followBtnText, channel?.isFollowing && styles.followedBtnText]}>
+                      {channel?.isFollowing ? 'Following' : 'Follow'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
 
-              {!!channel?.about && <Text style={styles.about}>{channel.about}</Text>}
+                {!!channel?.about && <Text style={styles.about}>{channel.about}</Text>}
+              </View>
             </View>
             
             <View style={styles.tabsContainer}>
@@ -258,9 +268,36 @@ export default function ChannelScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.white },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  header: { padding: 20, paddingTop: 52, alignItems: 'center' },
+  header: { position: 'relative' },
   backBtn: { position: 'absolute', left: 16, top: 52, padding: 4, zIndex: 10 },
-  avatar: { width: 86, height: 86, borderRadius: 43, backgroundColor: Colors.border },
+  backIconShadow: {
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  coverImage: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    backgroundColor: Colors.border,
+  },
+  coverPlaceholder: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    backgroundColor: '#E5E7EB',
+  },
+  profileInfoContainer: {
+    padding: 20,
+    alignItems: 'center',
+    marginTop: -43, // Pull half of avatar over cover
+  },
+  avatar: { 
+    width: 86, 
+    height: 86, 
+    borderRadius: 43, 
+    backgroundColor: Colors.border,
+    borderWidth: 4,
+    borderColor: Colors.white,
+  },
   name: { marginTop: 12, fontSize: 22, fontWeight: 'bold', color: Colors.text },
   username: { marginTop: 3, color: Colors.textGray, fontSize: 14 },
   metaText: { marginTop: 4, color: Colors.textGray, marginBottom: 15 },

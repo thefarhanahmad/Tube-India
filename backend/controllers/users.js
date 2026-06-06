@@ -27,10 +27,10 @@ exports.createUser = async (req, res, next) => {
 // @access Private
 exports.updateChannel = async (req, res, next) => {
   try {
-    const { channelName, about, avatar } = req.body;
+    const { channelName, about, avatar, coverImage } = req.body;
     const user = await User.findByIdAndUpdate(
       req.user.id,
-      { channelName, about, avatar },
+      { channelName, about, avatar, coverImage },
       { new: true, runValidators: true }
     ).select('-password');
 
@@ -42,7 +42,7 @@ exports.updateChannel = async (req, res, next) => {
 
 exports.getChannelProfile = async (req, res, next) => {
   try {
-    const channelObj = await User.findById(req.params.id).select('name avatar channelName about followersCount createdAt');
+    const channelObj = await User.findById(req.params.id).select('name avatar coverImage channelName about followersCount createdAt');
     if (!channelObj) return res.status(404).json({ success: false, message: 'Channel not found' });
 
     const channel = channelObj.toObject();

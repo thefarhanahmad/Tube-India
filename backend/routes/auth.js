@@ -13,6 +13,6 @@ router.post('/login', phoneLoginValidationRules(), validate, loginWithPhone);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 router.get('/me', protect, getMe);
-router.put('/channel', protect, upload.single('avatar'), updateChannel);
+router.put('/channel', protect, upload.fields([{ name: 'avatar', maxCount: 1 }, { name: 'coverImage', maxCount: 1 }]), updateChannel);
 
 module.exports = router;

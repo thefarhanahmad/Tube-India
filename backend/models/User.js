@@ -21,6 +21,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  coverImage: {
+    type: String,
+    default: null,
+  },
   phone: {
     type: String,
     unique: true,

@@ -34,10 +34,10 @@ export default function EditChannelScreen() {
   const [channelName, setChannelName] = useState(user?.channelName || '');
   const [about, setAbout] = useState(user?.about || '');
   const [avatar, setAvatar] = useState(user?.channelName ? (user?.avatar || '') : '');
+  const [coverImage, setCoverImage] = useState(user?.coverImage || '');
   const [loading, setLoading] = useState(false);
 
-  const pickImage = async () => {
-    // Check permission first to prevent UI hang
+  const pickAvatar = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permission Denied', 'We need access to your photos to update your avatar.');
@@ -49,14 +49,37 @@ export default function EditChannelScreen() {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
-        quality: 0.7, // Lower quality prevents system editor crashes on some devices
+        quality: 0.7,
       });
 
       if (!result.canceled) {
         setAvatar(result.assets[0].uri);
       }
     } catch (err) {
-      Alert.alert('Error', 'Failed to pick or crop image. Please try again.');
+      Alert.alert('Error', 'Failed to pick avatar. Please try again.');
+    }
+  };
+
+  const pickCoverImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'We need access to your photos to update your cover image.');
+      return;
+    }
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 0.8,
+      });
+
+      if (!result.canceled) {
+        setCoverImage(result.assets[0].uri);
+      }
+    } catch (err) {
+      Alert.alert('Error', 'Failed to pick cover image. Please try again.');
     }
   };
 
@@ -85,6 +108,20 @@ export default function EditChannelScreen() {
         });
       } else if (isRemoteAvatar) {
         formData.append('avatar', avatar);
+      }
+
+      const isLocalCover = coverImage?.startsWith('file://') || coverImage?.startsWith('content://');
+      const isRemoteCover = coverImage?.startsWith('http://') || coverImage?.startsWith('https://');
+
+      if (isLocalCover) {
+        // @ts-ignore
+        formData.append('coverImage', {
+          uri: coverImage,
+          type: 'image/jpeg',
+          name: 'cover.jpg',
+        });
+      } else if (isRemoteCover) {
+        formData.append('coverImage', coverImage);
       }
 
       const res = await api.put('/auth/channel', formData, {
@@ -127,8 +164,23 @@ export default function EditChannelScreen() {
         <View style={{ width: 24 }} />
       </View>
 
+      <Text style={styles.label}>Channel Banner (16:9)</Text>
+      <TouchableOpacity style={styles.coverSection} onPress={pickCoverImage}>
+        {getAvatarUri(coverImage) ? (
+          <Image source={{ uri: getAvatarUri(coverImage)! }} style={styles.coverImage} />
+        ) : (
+          <View style={styles.coverPlaceholder}>
+            <Ionicons name="image-outline" size={40} color={Colors.textGray} />
+            <Text style={styles.placeholderText}>Tap to select cover image</Text>
+          </View>
+        )}
+        <View style={styles.coverCameraIcon}>
+          <Ionicons name="camera" size={20} color={Colors.white} />
+        </View>
+      </TouchableOpacity>
+
       <View style={styles.avatarSection}>
-        <TouchableOpacity onPress={pickImage}>
+        <TouchableOpacity onPress={pickAvatar}>
           {getAvatarUri(avatar) ? (
             <Image source={{ uri: getAvatarUri(avatar)! }} style={styles.avatar} />
           ) : (
@@ -206,6 +258,41 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: Colors.text,
+  },
+  coverSection: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 25,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    position: 'relative',
+  },
+  coverImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  coverPlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  placeholderText: {
+    color: Colors.textGray,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  coverCameraIcon: {
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    padding: 8,
+    borderRadius: 20,
   },
   avatarSection: {
     alignItems: 'center',
