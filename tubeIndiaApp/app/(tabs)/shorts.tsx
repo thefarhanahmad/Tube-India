@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, Dimensions, TouchableOpacity, ActivityIndicator, ScrollView, Platform, Modal, Pressable, Share, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, Dimensions, TouchableOpacity, ActivityIndicator, ScrollView, Platform, Modal, Pressable, Share, Alert, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Video, ResizeMode } from 'expo-av';
+import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 import { useIsFocused } from '@react-navigation/native';
 import Colors from '../../constants/Colors';
 import api from '../../services/api';
@@ -338,64 +338,147 @@ export default function ShortsScreen() {
           index,
         })}
         renderItem={({ item, index }) => (
-          <View style={[styles.shortItem, { height: containerHeight }]}>
-            <Video
-              source={{ uri: item.videoUrl }}
-              style={styles.fullVideo}
-              resizeMode={ResizeMode.COVER}
-              shouldPlay={isFocused && activeVideoIndex === index}
-              isLooping
-              isMuted={false}
-              posterSource={{ uri: item.thumbnail }}
-              usePoster
-            />
-            <View style={styles.overlay}>
-              <View style={[styles.topHeader, { top: insets.top + 10 }]}>
-                <Text style={styles.shortsHeaderTitle}>Shorts</Text>
-              </View>
-
-              <View style={styles.rightActions}>
-                <TouchableOpacity style={styles.actionButton} onPress={() => handleLike(item._id)}>
-                  <Ionicons name={item.isLiked ? "thumbs-up" : "thumbs-up-outline"} size={32} color={item.isLiked ? Colors.primary : Colors.white} />
-                  <Text style={styles.actionText}>{formatViews(item.likes.length)}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.actionButton} onPress={() => handleCommentClick(item._id)}>
-                  <Ionicons name="chatbubble-ellipses" size={32} color={Colors.white} />
-                  <Text style={styles.actionText}>{formatViews(item.commentsCount)}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.actionButton} onPress={() => handleShare(item)}>
-                  <Ionicons name="share-social" size={32} color={Colors.white} />
-                  <Text style={styles.actionText}>Share</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.actionButton} onPress={() => handleMenuClick(item)}>
-                  <Ionicons name="ellipsis-vertical" size={30} color={Colors.white} />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.bottomDetails}>
-                <TouchableOpacity style={styles.ownerRow} onPress={() => item.owner?._id && router.push(`/channel/${item.owner._id}`)}>
-                  <Image source={{ uri: item.owner?.avatar || FALLBACK_AVATAR }} style={styles.ownerAvatar} />
-                  <Text style={styles.ownerName} numberOfLines={1}>@{item.owner.channelName || item.owner.name}</Text>
-                  {item.owner._id !== user?._id && (
-                    <TouchableOpacity 
-                      style={[styles.followBtn, item.isFollowing && styles.followedBtn]} 
-                      onPress={() => handleFollow(item.owner._id)}
-                    >
-                      <Text style={[styles.followBtnText, item.isFollowing && styles.followedBtnText]}>
-                        {item.isFollowing ? 'Unfollow' : 'Follow'}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </TouchableOpacity>
-                <Text style={styles.shortTitle} numberOfLines={2}>{item.title}</Text>
-              </View>
-            </View>
-          </View>
+          <ShortItem
+            item={item}
+            index={index}
+            activeVideoIndex={activeVideoIndex}
+            containerHeight={containerHeight}
+            isFocused={isFocused}
+            insets={insets}
+            user={user}
+            onLike={handleLike}
+            onCommentClick={handleCommentClick}
+            onShare={handleShare}
+            onMenuClick={handleMenuClick}
+            onFollow={handleFollow}
+          />
         )}
       />
     </View>
   );
 }
+
+const ShortItem = ({ item, index, activeVideoIndex, containerHeight, isFocused, insets, user, onLike, onCommentClick, onShare, onMenuClick, onFollow }: any) => {
+  const router = useRouter();
+  const videoRef = useRef<Video>(null);
+  const [isPaused, setIsPaused] = useState(false);
+  const [showIcon, setShowIcon] = useState(false);
+  const [iconName, setIconName] = useState<'play' | 'pause'>('play');
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.7)).current;
+
+  const isActive = isFocused && activeVideoIndex === index;
+
+  useEffect(() => {
+    if (!isActive) {
+      setIsPaused(false);
+    }
+  }, [isActive]);
+
+  const togglePlayPause = async () => {
+    if (!videoRef.current) return;
+    
+    const newPausedState = !isPaused;
+    setIsPaused(newPausedState);
+    setIconName(newPausedState ? 'pause' : 'play');
+    
+    if (newPausedState) {
+      await videoRef.current.pauseAsync();
+    } else {
+      await videoRef.current.playAsync();
+    }
+
+    // Show animation
+    setShowIcon(true);
+    fadeAnim.setValue(1);
+    scaleAnim.setValue(0.7);
+
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1.2,
+        friction: 4,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setShowIcon(false));
+  };
+
+  return (
+    <View style={[styles.shortItem, { height: containerHeight }]}>
+      <Pressable style={styles.videoContainer} onPress={togglePlayPause}>
+        <Video
+          ref={videoRef}
+          source={{ uri: item.videoUrl }}
+          style={styles.fullVideo}
+          resizeMode={ResizeMode.COVER}
+          shouldPlay={isActive && !isPaused}
+          isLooping
+          isMuted={false}
+          posterSource={{ uri: item.thumbnail }}
+          usePoster
+        />
+        
+        {showIcon && (
+          <View style={StyleSheet.absoluteFill}>
+            <View style={styles.iconOverlay}>
+              <Animated.View style={{ opacity: fadeAnim, transform: [{ scale: scaleAnim }] }}>
+                <View style={styles.iconCircle}>
+                  <Ionicons name={iconName} size={40} color={Colors.white} />
+                </View>
+              </Animated.View>
+            </View>
+          </View>
+        )}
+      </Pressable>
+
+      <View style={styles.overlay} pointerEvents="box-none">
+        <View style={[styles.topHeader, { top: insets.top + 10 }]}>
+          <Text style={styles.shortsHeaderTitle}>Shorts</Text>
+        </View>
+
+        <View style={styles.rightActions}>
+          <TouchableOpacity style={styles.actionButton} onPress={() => onLike(item._id)}>
+            <Ionicons name={item.isLiked ? "thumbs-up" : "thumbs-up-outline"} size={32} color={item.isLiked ? Colors.primary : Colors.white} />
+            <Text style={styles.actionText}>{formatViews(item.likes.length)}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton} onPress={() => onCommentClick(item._id)}>
+            <Ionicons name="chatbubble-ellipses" size={32} color={Colors.white} />
+            <Text style={styles.actionText}>{formatViews(item.commentsCount)}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton} onPress={() => onShare(item)}>
+            <Ionicons name="share-social" size={32} color={Colors.white} />
+            <Text style={styles.actionText}>Share</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton} onPress={() => onMenuClick(item)}>
+            <Ionicons name="ellipsis-vertical" size={30} color={Colors.white} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.bottomDetails}>
+          <TouchableOpacity style={styles.ownerRow} onPress={() => item.owner?._id && router.push(`/channel/${item.owner._id}`)}>
+            <Image source={{ uri: item.owner?.avatar || FALLBACK_AVATAR }} style={styles.ownerAvatar} />
+            <Text style={styles.ownerName} numberOfLines={1}>@{item.owner.channelName || item.owner.name}</Text>
+            {item.owner._id !== user?._id && (
+              <TouchableOpacity 
+                style={[styles.followBtn, item.isFollowing && styles.followedBtn]} 
+                onPress={() => onFollow(item.owner._id)}
+              >
+                <Text style={[styles.followBtnText, item.isFollowing && styles.followedBtnText]}>
+                  {item.isFollowing ? 'Unfollow' : 'Follow'}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </TouchableOpacity>
+          <Text style={styles.shortTitle} numberOfLines={2}>{item.title}</Text>
+        </View>
+      </View>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -414,6 +497,23 @@ const styles = StyleSheet.create({
   fullVideo: {
     width: '100%',
     height: '100%',
+  },
+  videoContainer: {
+    flex: 1,
+  },
+  iconOverlay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.05)',
+  },
+  iconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
