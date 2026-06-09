@@ -124,7 +124,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, onLoginSuccess 
     >
       <Pressable style={styles.overlay} onPress={onClose}>
         <KeyboardAvoidingView 
-          behavior={Platform.OS === "ios" ? "padding" : undefined} 
+          behavior={Platform.OS === "ios" ? "padding" : "padding"} 
           style={styles.keyboardView}
         >
           <Pressable style={styles.modalContent} onPress={e => e.stopPropagation()}>

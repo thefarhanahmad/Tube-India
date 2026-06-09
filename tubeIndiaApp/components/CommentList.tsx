@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, ActivityIndicator, KeyboardAvoidingView, Platform, Modal } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, ActivityIndicator, KeyboardAvoidingView, Platform, Modal, Keyboard, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -94,14 +94,19 @@ const CommentList: React.FC<CommentListProps> = ({ videoId, postId, onCommentAdd
     }
   };
 
+  const closeReply = () => {
+    setReplyTarget(null);
+    setReplyText('');
+    Keyboard.dismiss();
+  };
+
   const handleReply = async (commentId: string, text: string) => {
     if (!isAuthenticated) return onAuthRequired();
     if (!text.trim()) return;
     try {
       await api.post(`/comments/${commentId}/replies`, { text });
       fetchComments(true);
-      setReplyTarget(null);
-      setReplyText('');
+      closeReply();
     } catch (err) {
       console.error('Failed to reply', err);
     } finally {
@@ -173,56 +178,68 @@ const CommentList: React.FC<CommentListProps> = ({ videoId, postId, onCommentAdd
       <Modal
         visible={!!replyTarget}
         transparent
-        animationType="fade"
-        onRequestClose={() => setReplyTarget(null)}
+        animationType="slide"
+        onRequestClose={closeReply}
+        statusBarTranslucent
       >
-        <KeyboardAvoidingView
-          style={styles.replyModal}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={0}
+        <Pressable 
+          style={styles.replyModal} 
+          onPress={closeReply}
         >
-          <TouchableOpacity style={styles.replyBackdrop} activeOpacity={1} onPress={() => setReplyTarget(null)} />
-          <View
-            style={[
-              styles.replyComposer,
-              {
-                paddingBottom: Math.max(insets.bottom, 6) + 8,
-                marginBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 4) + 4 : 2,
-              },
-            ]}
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+            keyboardVerticalOffset={Platform.OS === 'android' ? 0 : 0}
+            style={{ width: '100%', justifyContent: 'flex-end', flex: 1 }}
           >
-            <View style={styles.replyComposerHeader}>
-              <Text style={styles.replyingToText} numberOfLines={1}>
-                Replying to {replyTarget?.user?.channelName || replyTarget?.user?.name || 'User'}
-              </Text>
-              <TouchableOpacity onPress={() => setReplyTarget(null)} style={styles.closeReplyBtn}>
-                <Ionicons name="close" size={20} color={Colors.textGray} />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.replyComposerRow}>
-              <TextInput
-                ref={replyInputRef}
-                style={styles.replyComposerInput}
-                placeholder="Write a reply..."
-                value={replyText}
-                onChangeText={setReplyText}
-                multiline
-                returnKeyType="send"
-              />
-              <TouchableOpacity
-                style={[styles.replySendBtn, !replyText.trim() && styles.replySendBtnDisabled]}
-                onPress={submitReply}
-                disabled={!replyText.trim() || replySubmitting}
-              >
-                {replySubmitting ? (
-                  <ActivityIndicator size="small" color={Colors.white} />
-                ) : (
-                  <Ionicons name="send" size={18} color={Colors.white} />
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
+            <Pressable 
+              style={[
+                styles.replyComposer,
+                {
+                  paddingBottom: Math.max(insets.bottom, 12) + 10,
+                },
+              ]}
+              onPress={(e) => e.stopPropagation()}
+            >
+              <View style={styles.replyComposerHeader}>
+                <Text style={styles.replyingToText} numberOfLines={1}>
+                  Replying to {replyTarget?.user?.channelName || replyTarget?.user?.name || 'User'}
+                </Text>
+                <TouchableOpacity 
+                  onPress={closeReply} 
+                  style={styles.closeReplyBtn} 
+                  hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                >
+                  <Ionicons name="close" size={22} color={Colors.textGray} />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.replyComposerRow}>
+                <TextInput
+                  ref={replyInputRef}
+                  style={styles.replyComposerInput}
+                  placeholder="Write a reply..."
+                  value={replyText}
+                  onChangeText={setReplyText}
+                  multiline
+                  returnKeyType="send"
+                  onSubmitEditing={submitReply}
+                  blurOnSubmit={false}
+                />
+                <TouchableOpacity
+                  style={[styles.replySendBtn, !replyText.trim() && styles.replySendBtnDisabled]}
+                  onPress={submitReply}
+                  disabled={!replyText.trim() || replySubmitting}
+                  hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                >
+                  {replySubmitting ? (
+                    <ActivityIndicator size="small" color={Colors.white} />
+                  ) : (
+                    <Ionicons name="send" size={18} color={Colors.white} />
+                  )}
+                </TouchableOpacity>
+              </View>
+            </Pressable>
+          </KeyboardAvoidingView>
+        </Pressable>
       </Modal>
     </View>
   );

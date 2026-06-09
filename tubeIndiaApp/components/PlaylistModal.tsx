@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, FlatList, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, FlatList, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Colors from '../constants/Colors';
 import api from '../services/api';
@@ -60,8 +60,11 @@ const PlaylistModal: React.FC<PlaylistModalProps> = ({ visible, onClose, videoId
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide">
-      <View style={styles.overlay}>
+    <Modal visible={visible} transparent animationType="slide" statusBarTranslucent>
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+      >
         <View style={styles.content}>
           <View style={styles.header}>
             <Text style={styles.title}>Save video to...</Text>
@@ -109,7 +112,7 @@ const PlaylistModal: React.FC<PlaylistModalProps> = ({ visible, onClose, videoId
             />
           )}
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
