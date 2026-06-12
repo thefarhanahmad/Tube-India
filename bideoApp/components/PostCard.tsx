@@ -1,10 +1,13 @@
 import { showAlert } from './AppAlert';
 import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Modal, ScrollView, Dimensions, Share, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Dimensions, Share, Pressable, Alert } from 'react-native';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '../constants/Colors';
 import { formatTimeAgo } from '../utils/formatDate';
+import { hapticLight, hapticSelection } from '../utils/haptics';
 import CommentList from './CommentList';
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
@@ -20,6 +23,7 @@ interface PostCardProps {
 
 const PostCard = ({ post, onDelete }: PostCardProps) => {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
   const [likes, setLikes] = useState(post.likes || []);
   const [commentsCount, setCommentsCount] = useState(post.commentsCount || 0);
@@ -52,6 +56,7 @@ const PostCard = ({ post, onDelete }: PostCardProps) => {
       setAuthModalVisible(true);
       return;
     }
+    hapticLight();
 
     const previousLikes = [...likes];
     if (isLiked) {
@@ -107,24 +112,25 @@ const PostCard = ({ post, onDelete }: PostCardProps) => {
       
       <View style={styles.header}>
         <TouchableOpacity style={styles.headerInfo} onPress={() => owner._id && router.push(`/channel/${owner._id}`)}>
-          <Image source={{ uri: owner.avatar || FALLBACK_AVATAR }} style={styles.avatar} />
+          <Image source={{ uri: owner.avatar || FALLBACK_AVATAR }} style={styles.avatar} contentFit="cover" transition={200} />
           <View style={styles.headerText}>
             <Text style={styles.ownerName}>{owner.channelName || owner.name || 'User'}</Text>
             <Text style={styles.time}>{formatTimeAgo(post.createdAt)}</Text>
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisible(true)}>
-          <Ionicons name="ellipsis-vertical" size={20} color={Colors.text} />
+        <TouchableOpacity style={styles.menuButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={() => { hapticSelection(); setMenuVisible(true); }}>
+          <Ionicons name="ellipsis-vertical" size={20} color={Colors.textGray} />
         </TouchableOpacity>
       </View>
 
       {!!post.text && <Text style={styles.text}>{post.text}</Text>}
       {!!post.imageUrl && (
-        <Image 
-          source={{ uri: post.imageUrl }} 
-          style={styles.image} 
-          resizeMode="cover"
+        <Image
+          source={{ uri: post.imageUrl }}
+          style={styles.image}
+          contentFit="cover"
+          transition={250}
         />
       )}
 
@@ -152,7 +158,8 @@ const PostCard = ({ post, onDelete }: PostCardProps) => {
         onRequestClose={() => setMenuVisible(false)}
       >
         <Pressable style={styles.modalOverlay} onPress={() => setMenuVisible(false)}>
-          <View style={styles.menuContent}>
+          <Pressable style={[styles.menuContent, { paddingBottom: Math.max(insets.bottom, 12) + 8 }]} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.grabber} />
             {isOwner && (
               <>
                 <TouchableOpacity style={styles.menuItem} onPress={handleEdit}>
@@ -171,17 +178,10 @@ const PostCard = ({ post, onDelete }: PostCardProps) => {
               <Text style={styles.menuText}>Share</Text>
             </TouchableOpacity>
 
-            {!isOwner && (
-              <TouchableOpacity style={styles.menuItem} onPress={() => setMenuVisible(false)}>
-                <Ionicons name="flag-outline" size={24} color={Colors.text} />
-                <Text style={styles.menuText}>Report</Text>
-              </TouchableOpacity>
-            )}
-
             <TouchableOpacity style={styles.cancelItem} onPress={() => setMenuVisible(false)}>
               <Text style={styles.cancelText}>Cancel</Text>
             </TouchableOpacity>
-          </View>
+          </Pressable>
         </Pressable>
       </Modal>
 
@@ -217,9 +217,14 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.white,
     padding: 14,
-    marginBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    marginHorizontal: 12,
+    marginBottom: 16,
+    borderRadius: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   header: {
     flexDirection: 'row',
@@ -233,10 +238,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   avatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: Colors.border,
+    borderWidth: 1.5,
+    borderColor: Colors.primary + '33',
   },
   headerText: {
     marginLeft: 10,
@@ -316,9 +323,18 @@ const styles = StyleSheet.create({
   },
   menuContent: {
     backgroundColor: Colors.white,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+  },
+  grabber: {
+    alignSelf: 'center',
+    width: 40,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: Colors.border,
+    marginBottom: 10,
   },
   menuItem: {
     flexDirection: 'row',

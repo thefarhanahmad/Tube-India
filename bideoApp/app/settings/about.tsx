@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import Colors from '../../constants/Colors';
@@ -28,7 +29,7 @@ export default function AboutScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.heroSection}>
            <View style={styles.logoWrapper}>
-              <Image source={require('../../assets/app-logo.png')} style={styles.logo} resizeMode="contain" />
+              <Image source={require('../../assets/app-logo.png')} style={styles.logo} contentFit="contain" />
            </View>
            <Text style={styles.appName}>Bideo</Text>
            <Text style={styles.appTagline}>Connecting Creators across India</Text>

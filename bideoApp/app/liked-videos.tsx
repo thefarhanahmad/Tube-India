@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import Colors from '../constants/Colors';
 import api from '../services/api';
+import { EmptyState } from '../components/ListStates';
 import { formatTimeAgo, formatViews } from '../utils/formatDate';
 
 export default function LikedVideosScreen() {
@@ -44,7 +46,7 @@ export default function LikedVideosScreen() {
         onPress={() => router.push(`/video/${item._id}`)}
       >
         <View style={styles.thumbnailContainer}>
-          <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} />
+          <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} contentFit="cover" transition={250} />
           <View style={styles.durationBadge}>
             <Text style={styles.durationText}>{formatDuration(item.duration || 0)}</Text>
           </View>
@@ -83,9 +85,11 @@ export default function LikedVideosScreen() {
           renderItem={({ item }) => renderHorizontalCard(item)}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
-            <View style={styles.center}>
-              <Text style={styles.emptyText}>You haven't liked any videos yet</Text>
-            </View>
+            <EmptyState
+              icon="thumbs-up-outline"
+              title="No liked videos yet"
+              subtitle="Tap the like button on videos you enjoy and they'll appear here."
+            />
           }
           refreshing={loading}
           onRefresh={loadLikedVideos}
@@ -98,7 +102,7 @@ export default function LikedVideosScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -107,6 +111,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingTop: 50,
     paddingBottom: 15,
+    backgroundColor: Colors.white,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
   },
@@ -122,6 +127,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   list: {
+    paddingTop: 12,
     paddingBottom: 20,
   },
   emptyText: {
@@ -130,9 +136,17 @@ const styles = StyleSheet.create({
   },
   horizontalCard: {
     flexDirection: 'row',
-    paddingHorizontal: 15,
-    paddingVertical: 12,
+    backgroundColor: Colors.white,
+    marginHorizontal: 12,
+    marginBottom: 10,
+    borderRadius: 14,
+    padding: 10,
     gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   thumbnailContainer: {
     width: 160,

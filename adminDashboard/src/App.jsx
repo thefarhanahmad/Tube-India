@@ -1,6 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
+import Guidelines from './pages/Guidelines';
+import About from './pages/About';
+import Contact from './pages/Contact';
 import AdminLayout from './components/AdminLayout';
 import DashboardHome from './pages/DashboardHome';
 import Users from './pages/Users';
@@ -21,6 +26,13 @@ function App() {
       <Routes>
         {/* Public marketing site */}
         <Route path="/" element={<Landing />} />
+
+        {/* Public info & legal pages */}
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/guidelines" element={<Guidelines />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
 
         {/* Admin login */}
         <Route

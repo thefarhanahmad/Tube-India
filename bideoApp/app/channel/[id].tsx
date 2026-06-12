@@ -1,6 +1,8 @@
 import { showAlert } from '../../components/AppAlert';
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity, ActivityIndicator, Alert, ScrollView, Dimensions, Share } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, ScrollView, Dimensions, Share } from 'react-native';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Colors from '../../constants/Colors';
@@ -10,6 +12,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import AuthModal from '../../components/AuthModal';
 import { formatTimeAgo, formatViews } from '../../utils/formatDate';
+import { hapticLight } from '../../utils/haptics';
 
 const { width } = Dimensions.get('window');
 const FALLBACK_AVATAR = 'https://via.placeholder.com/100x100.png?text=User';
@@ -64,6 +67,7 @@ export default function ChannelScreen() {
       return;
     }
     if (!channel) return;
+    hapticLight();
 
     const prevFollowing = channel.isFollowing;
     const prevCount = channel.followersCount || 0;
@@ -113,7 +117,7 @@ export default function ChannelScreen() {
         activeOpacity={0.7}
       >
         <View style={styles.thumbnailContainer}>
-          <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} />
+          <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} contentFit="cover" transition={250} />
           <View style={styles.durationBadge}>
             <Text style={styles.durationText}>{formatDuration(item.duration || 0)}</Text>
           </View>
@@ -139,7 +143,7 @@ export default function ChannelScreen() {
         activeOpacity={0.9}
       >
         <View style={styles.shortGridThumbnailContainer}>
-          <Image source={{ uri: item.thumbnail }} style={styles.shortGridThumbnail} />
+          <Image source={{ uri: item.thumbnail }} style={styles.shortGridThumbnail} contentFit="cover" transition={250} />
           <View style={styles.shortViewsBadge}>
             <Ionicons name="play-outline" size={10} color={Colors.white} />
             <Text style={styles.shortViewsText}>{item.views}</Text>
@@ -207,16 +211,21 @@ export default function ChannelScreen() {
               </TouchableOpacity>
               
               {channel?.coverImage ? (
-                <Image source={{ uri: channel.coverImage }} style={styles.coverImage} />
+                <Image source={{ uri: channel.coverImage }} style={styles.coverImage} contentFit="cover" transition={250} />
               ) : (
-                <View style={styles.coverPlaceholder} />
+                <LinearGradient
+                  colors={[Colors.primary, Colors.secondary]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.coverPlaceholder}
+                />
               )}
             </View>
 
             {/* Profile Section */}
             <View style={styles.profileSection}>
               <View style={styles.avatarWrapper}>
-                <Image source={{ uri: channel?.avatar || FALLBACK_AVATAR }} style={styles.avatar} />
+                <Image source={{ uri: channel?.avatar || FALLBACK_AVATAR }} style={styles.avatar} contentFit="cover" transition={200} />
               </View>
               
               <View style={styles.identityContainer}>
@@ -406,14 +415,21 @@ const styles = StyleSheet.create({
   },
   followBtn: {
     flex: 1,
-    backgroundColor: Colors.text, 
+    backgroundColor: Colors.primary,
     height: 44,
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
   },
   followedBtn: {
-    backgroundColor: '#F2F2F2',
+    backgroundColor: '#F2F3F5',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   followBtnText: {
     color: Colors.white,
@@ -463,7 +479,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   tabBtnActive: {
-    borderBottomColor: Colors.text,
+    borderBottomColor: Colors.primary,
   },
   tabText: {
     fontSize: 15,
@@ -471,7 +487,7 @@ const styles = StyleSheet.create({
     color: Colors.textGray,
   },
   tabTextActive: {
-    color: Colors.text,
+    color: Colors.primary,
   },
 
   // Sort Filters
@@ -482,12 +498,12 @@ const styles = StyleSheet.create({
   sortBtn: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: '#F2F2F2',
+    borderRadius: 999,
+    backgroundColor: '#F2F3F5',
     marginRight: 10,
   },
   sortBtnActive: {
-    backgroundColor: Colors.text,
+    backgroundColor: Colors.primary,
   },
   sortText: {
     fontSize: 14,

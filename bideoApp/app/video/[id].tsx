@@ -1,9 +1,10 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Image, FlatList, Share } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, FlatList, Share } from 'react-native';
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSelector } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
-import { Video, ResizeMode, VideoFullscreenUpdate, Audio } from 'expo-av';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { useFocusEffect } from '@react-navigation/native';
 import Colors from '../../constants/Colors';
@@ -14,6 +15,7 @@ import CommentList from '../../components/CommentList';
 import AuthModal from '../../components/AuthModal';
 import PlaylistModal from '../../components/PlaylistModal';
 import { formatTimeAgo, formatViews } from '../../utils/formatDate';
+import { hapticLight } from '../../utils/haptics';
 
 const FALLBACK_IMAGE = 'https://via.placeholder.com/80x80.png?text=User';
 
@@ -21,8 +23,12 @@ export default function VideoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
-  const videoRef = useRef<Video | null>(null);
-  
+  // expo-video player (replaces the deprecated expo-av <Video>). Source is loaded
+  // via player.replace() once the video data arrives.
+  const player = useVideoPlayer(null, (p) => {
+    p.loop = false;
+  });
+
   const [video, setVideo] = useState<any>(null);
   const [recommendedVideos, setRecommendedVideos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,40 +37,32 @@ export default function VideoScreen() {
   const [isFollowed, setIsFollowed] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [isDisliked, setIsDisliked] = useState(false);
-  const [isFinished, setIsFinished] = useState(false);
 
   useEffect(() => {
-    // Configure audio mode to fix AudioFocusNotAcquiredException
-    const setupAudio = async () => {
-      try {
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: false,
-          staysActiveInBackground: false,
-          playsInSilentModeIOS: true,
-          shouldDuckAndroid: true,
-          playThroughEarpieceAndroid: false,
-        });
-      } catch (err) {
-        console.log('Audio setup error:', err);
-      }
-    };
-
-    setupAudio();
-
     if (id) {
       loadVideoData();
     }
   }, [id]);
 
+  // Load the source into the player once the video URL is available.
+  useEffect(() => {
+    if (!video?.videoUrl) return;
+    try {
+      player.replace(video.videoUrl);
+      player.play();
+    } catch (err) {
+      console.log('Video load error:', err);
+    }
+  }, [video?.videoUrl, player]);
+
   useFocusEffect(
     useCallback(() => {
       return () => {
-        if (videoRef.current) {
-          videoRef.current.stopAsync?.().catch(() => {});
-          videoRef.current.unloadAsync?.().catch(() => {});
-        }
+        try {
+          player.pause();
+        } catch {}
       };
-    }, [])
+    }, [player])
   );
 
   const loadVideoData = async () => {
@@ -108,11 +106,12 @@ export default function VideoScreen() {
       return;
     }
     
+    hapticLight();
     const prevIsLiked = isLiked;
     const prevIsDisliked = isDisliked;
     const prevLikes = [...(video.likes || [])];
     const prevDislikes = [...(video.dislikes || [])];
-    
+
     // Optimistic update
     setIsLiked(!isLiked);
     if (!isLiked) setIsDisliked(false);
@@ -215,9 +214,10 @@ export default function VideoScreen() {
       return;
     }
     
+    hapticLight();
     const prevIsFollowed = isFollowed;
     const prevFollowersCount = video?.owner?.followersCount || 0;
-    
+
     // Optimistic update
     setIsFollowed(!isFollowed);
     setVideo((prev: any) => ({
@@ -243,12 +243,12 @@ export default function VideoScreen() {
     }
   };
 
-  const handleFullscreenUpdate = async (event: { fullscreenUpdate: VideoFullscreenUpdate }) => {
-    if (event.fullscreenUpdate === VideoFullscreenUpdate.PLAYER_WILL_PRESENT) {
-      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
-    } else if (event.fullscreenUpdate === VideoFullscreenUpdate.PLAYER_WILL_DISMISS) {
-      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-    }
+  const handleFullscreenEnter = async () => {
+    await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE).catch(() => {});
+  };
+
+  const handleFullscreenExit = async () => {
+    await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
   };
 
   const handleAdd = () => {
@@ -271,21 +271,6 @@ export default function VideoScreen() {
     }
   };
 
-  const handlePlaybackStatusUpdate = (status: any) => {
-    if (status.didJustFinish) {
-      setIsFinished(true);
-    }
-    
-    if (status.shouldPlay && isFinished) {
-      setIsFinished(false);
-      videoRef.current?.replayAsync().catch(() => {});
-    }
-
-    if (status.positionMillis < (status.durationMillis || 0) - 2000) {
-       if (isFinished) setIsFinished(false);
-    }
-  };
-
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -304,19 +289,15 @@ export default function VideoScreen() {
 
   return (
     <View style={styles.container}>
-      <Video
-        ref={videoRef}
-        source={{ uri: video?.videoUrl || '' }}
-        rate={1.0}
-        volume={1.0}
-        isMuted={false}
-        resizeMode={ResizeMode.CONTAIN}
-        shouldPlay
-        useNativeControls
+      <VideoView
+        player={player}
         style={styles.videoPlayer}
-        onFullscreenUpdate={handleFullscreenUpdate}
-        onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
-        onError={(err) => console.log('Video error:', err)}
+        contentFit="contain"
+        nativeControls
+        allowsFullscreen
+        allowsPictureInPicture
+        onFullscreenEnter={handleFullscreenEnter}
+        onFullscreenExit={handleFullscreenExit}
       />
 
       <FlatList
@@ -327,41 +308,34 @@ export default function VideoScreen() {
               {formatViews(video.views || 0)} views • {formatTimeAgo(video.createdAt)}
             </Text>
 
-            <View style={styles.actionButtons}>
-              <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
-                <Ionicons 
-                  name={isLiked ? "thumbs-up" : "thumbs-up-outline"} 
-                  size={24} 
-                  color={isLiked ? Colors.primary : Colors.text} 
-                />
-                <Text style={[styles.actionText, isLiked && { color: Colors.primary }]}>
-                  {formatViews(video.likes?.length || 0)}
-                </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.actionButtons}
+            >
+              <TouchableOpacity style={[styles.chip, isLiked && styles.chipActive]} onPress={handleLike} activeOpacity={0.8}>
+                <Ionicons name={isLiked ? 'thumbs-up' : 'thumbs-up-outline'} size={20} color={isLiked ? Colors.primary : Colors.text} />
+                <Text style={[styles.chipText, isLiked && styles.chipTextActive]}>{formatViews(video.likes?.length || 0)}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton} onPress={handleDislike}>
-                <Ionicons 
-                  name={isDisliked ? "thumbs-down" : "thumbs-down-outline"} 
-                  size={24} 
-                  color={isDisliked ? Colors.primary : Colors.text} 
-                />
-                <Text style={[styles.actionText, isDisliked && { color: Colors.primary }]}>Dislike</Text>
+              <TouchableOpacity style={[styles.chip, isDisliked && styles.chipActive]} onPress={handleDislike} activeOpacity={0.8}>
+                <Ionicons name={isDisliked ? 'thumbs-down' : 'thumbs-down-outline'} size={20} color={isDisliked ? Colors.primary : Colors.text} />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
-                <Ionicons name="share-social-outline" size={24} color={Colors.text} />
-                <Text style={styles.actionText}>Share</Text>
+              <TouchableOpacity style={styles.chip} onPress={handleShare} activeOpacity={0.8}>
+                <Ionicons name="share-social-outline" size={20} color={Colors.text} />
+                <Text style={styles.chipText}>Share</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton} onPress={handleAdd}>
-                <Ionicons name="add-circle-outline" size={24} color={Colors.text} />
-                <Text style={styles.actionText}>Add</Text>
+              <TouchableOpacity style={styles.chip} onPress={handleAdd} activeOpacity={0.8}>
+                <Ionicons name="bookmark-outline" size={20} color={Colors.text} />
+                <Text style={styles.chipText}>Save</Text>
               </TouchableOpacity>
-            </View>
+            </ScrollView>
 
             <View style={styles.channelContainer}>
               <TouchableOpacity
                 style={styles.channelInfo}
                 onPress={() => video?.owner?._id && router.push(`/channel/${video.owner._id}`)}
               >
-                <Image source={{ uri: video?.owner?.avatar || FALLBACK_IMAGE }} style={styles.avatar} />
+                <Image source={{ uri: video?.owner?.avatar || FALLBACK_IMAGE }} style={styles.avatar} contentFit="cover" transition={200} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.channelName} numberOfLines={1}>{video?.owner?.channelName || video?.owner?.name || 'Unknown channel'}</Text>
                   <Text style={styles.followerCount}>{formatViews(video?.owner?.followersCount || 0)} followers</Text>
@@ -456,17 +430,29 @@ const styles = StyleSheet.create({
   },
   actionButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 10,
     marginBottom: 16,
-    paddingHorizontal: 8,
+    paddingVertical: 2,
   },
-  actionButton: {
+  chip: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#F2F3F5',
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 999,
   },
-  actionText: {
-    fontSize: 12,
+  chipActive: {
+    backgroundColor: Colors.primary + '1A',
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: '700',
     color: Colors.text,
-    marginTop: 4,
+  },
+  chipTextActive: {
+    color: Colors.primary,
   },
   channelContainer: {
     flexDirection: 'row',
@@ -485,11 +471,13 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     marginRight: 10,
     backgroundColor: '#E5E7EB',
+    borderWidth: 1.5,
+    borderColor: Colors.primary + '33',
   },
   channelName: {
     fontSize: 14,

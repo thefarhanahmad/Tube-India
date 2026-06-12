@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Colors from '../constants/Colors';
 import api from '../services/api';
+import { EmptyState } from '../components/ListStates';
 import { formatTimeAgo } from '../utils/formatDate';
 
 export default function NotificationsScreen() {
@@ -53,15 +55,22 @@ export default function NotificationsScreen() {
           data={items}
           keyExtractor={(item) => item._id}
           renderItem={({ item }) => (
-            <TouchableOpacity style={[styles.item, !item.read && styles.unread]} onPress={() => openItem(item)}>
-              <Image source={{ uri: item.actor?.avatar || 'https://via.placeholder.com/48x48.png?text=U' }} style={styles.avatar} />
+            <TouchableOpacity style={[styles.item, !item.read && styles.unread]} onPress={() => openItem(item)} activeOpacity={0.7}>
+              <Image source={{ uri: item.actor?.avatar || 'https://via.placeholder.com/48x48.png?text=U' }} style={styles.avatar} contentFit="cover" transition={200} />
               <View style={styles.itemText}>
-                <Text style={styles.message}>{item.message || 'New activity on your content'}</Text>
+                <Text style={styles.message} numberOfLines={2}>{item.message || 'New activity on your content'}</Text>
                 <Text style={styles.time}>{formatTimeAgo(item.createdAt)}</Text>
               </View>
+              {!item.read && <View style={styles.dot} />}
             </TouchableOpacity>
           )}
-          ListEmptyComponent={<Text style={styles.empty}>No notifications yet</Text>}
+          ListEmptyComponent={
+            <EmptyState
+              icon="notifications-outline"
+              title="You're all caught up"
+              subtitle="Likes, comments, follows and other activity will show up here."
+            />
+          }
           refreshing={loading}
           onRefresh={loadNotifications}
         />
@@ -76,11 +85,12 @@ const styles = StyleSheet.create({
   title: { fontSize: 18, fontWeight: 'bold', color: Colors.text },
   readAll: { color: Colors.primary, fontWeight: '600' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  item: { flexDirection: 'row', padding: 14, borderBottomWidth: 1, borderBottomColor: Colors.border },
+  item: { flexDirection: 'row', alignItems: 'center', padding: 14, borderBottomWidth: 1, borderBottomColor: Colors.border },
   unread: { backgroundColor: '#FFF7ED' },
-  avatar: { width: 42, height: 42, borderRadius: 21, backgroundColor: Colors.border },
+  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.border },
   itemText: { flex: 1, marginLeft: 12 },
-  message: { color: Colors.text, fontSize: 14 },
+  message: { color: Colors.text, fontSize: 14, lineHeight: 19 },
   time: { color: Colors.textGray, fontSize: 12, marginTop: 4 },
+  dot: { width: 9, height: 9, borderRadius: 5, backgroundColor: Colors.primary, marginLeft: 10 },
   empty: { textAlign: 'center', color: Colors.textGray, marginTop: 40 },
 });

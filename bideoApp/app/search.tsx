@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import Colors from '../constants/Colors';
 import VideoCard from '../components/VideoCard';
+import { EmptyState } from '../components/ListStates';
 import api from '../services/api';
 
 export default function SearchScreen() {
@@ -63,9 +64,11 @@ export default function SearchScreen() {
           <Ionicons name="arrow-back" size={24} color={Colors.text} />
         </TouchableOpacity>
         <View style={styles.searchBar}>
+          <Ionicons name="search" size={18} color={Colors.textGray} style={{ marginRight: 8 }} />
           <TextInput
             style={styles.input}
             placeholder="Search Bideo"
+            placeholderTextColor={Colors.textGray}
             value={query}
             onChangeText={onQueryChange}
             autoFocus
@@ -100,9 +103,17 @@ export default function SearchScreen() {
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             showResults && !loading ? (
-              <View style={styles.center}>
-                <Text style={styles.emptyText}>No results found for "{query}"</Text>
-              </View>
+              <EmptyState
+                icon="search-outline"
+                title="No results found"
+                subtitle={`We couldn't find anything for "${query}". Try a different search.`}
+              />
+            ) : !showResults ? (
+              <EmptyState
+                icon="search-outline"
+                title="Search Bideo"
+                subtitle="Find videos, shorts and creators. Your recent searches will appear here."
+              />
             ) : null
           }
         />
@@ -130,10 +141,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.background,
-    marginHorizontal: 15,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    height: 40,
+    marginHorizontal: 12,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    height: 44,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   input: {
     flex: 1,

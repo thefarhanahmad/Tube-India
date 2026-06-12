@@ -3,6 +3,7 @@ import Navbar from "../components/landing/Navbar";
 import Hero from "../components/landing/Hero";
 import Features from "../components/landing/Features";
 import HowItWorks from "../components/landing/HowItWorks";
+import EarnMoney from "../components/landing/EarnMoney";
 import Showcase from "../components/landing/Showcase";
 import DownloadCTA from "../components/landing/DownloadCTA";
 import Faq from "../components/landing/Faq";
@@ -18,6 +19,7 @@ const Landing = () => {
         <Hero />
         <Features />
         <HowItWorks />
+        <EarnMoney />
         <Showcase />
         <DownloadCTA />
         <Faq />

@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import Colors from '../constants/Colors';
 import VideoCard from '../components/VideoCard';
+import { EmptyState, VideoListSkeleton } from '../components/ListStates';
 import api from '../services/api';
 
 export default function HistoryScreen() {
@@ -41,10 +42,8 @@ export default function HistoryScreen() {
         <View style={{ width: 24 }} />
       </View>
 
-      {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={Colors.primary} />
-        </View>
+      {loading && history.length === 0 ? (
+        <VideoListSkeleton />
       ) : (
         <FlatList
           data={history}
@@ -52,9 +51,11 @@ export default function HistoryScreen() {
           renderItem={({ item }) => <VideoCard video={item} />}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
-            <View style={styles.center}>
-              <Text style={styles.emptyText}>No watch history found</Text>
-            </View>
+            <EmptyState
+              icon="time-outline"
+              title="No watch history yet"
+              subtitle="Videos you watch will show up here so you can easily find them again."
+            />
           }
           refreshing={loading}
           onRefresh={loadHistory}
@@ -67,7 +68,7 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -76,6 +77,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingTop: 50,
     paddingBottom: 15,
+    backgroundColor: Colors.white,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
   },
@@ -91,6 +93,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   list: {
+    paddingTop: 12,
     paddingBottom: 20,
   },
   emptyText: {

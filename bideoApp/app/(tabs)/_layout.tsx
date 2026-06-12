@@ -1,6 +1,7 @@
 import { Tabs, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { TouchableOpacity, Image } from 'react-native';
+import { TouchableOpacity } from 'react-native';
+import { Image } from 'expo-image';
 import Colors from '../../constants/Colors';
 
 export default function TabsLayout() {
@@ -31,7 +32,7 @@ export default function TabsLayout() {
             <Image
               source={require('../../assets/app-logo.png')}
               style={{ width: 120, height: 40 }}
-              resizeMode="contain"
+              contentFit="contain"
             />          ),
           headerTitleAlign: 'left',
           headerRight: () => (

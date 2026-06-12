@@ -1,6 +1,7 @@
 import { showAlert } from '../../components/AppAlert';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Image, ActivityIndicator, Alert, Modal, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert, Modal, Animated, Easing, KeyboardAvoidingView, Platform } from 'react-native';
+import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import Colors from '../../constants/Colors';
@@ -9,6 +10,7 @@ import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import AuthModal from '../../components/AuthModal';
+import { hapticSelection } from '../../utils/haptics';
 
 export default function UploadScreen() {
   const router = useRouter();
@@ -384,6 +386,20 @@ export default function UploadScreen() {
     }
   };
 
+  const resetToTypeSelection = () => {
+    setUploadType(null);
+    setVideo(null);
+    setThumbnail(null);
+    setThumbnailChanged(false);
+    setTitle('');
+    setDescription('');
+    setCategory('');
+    setTags('');
+    setPostText('');
+    setPostImage(null);
+    setVisibility('public');
+  };
+
   if (!isAuthenticated && !authModalVisible) {
     return (
       <View style={styles.center}>
@@ -431,25 +447,39 @@ export default function UploadScreen() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
       <AuthModal visible={authModalVisible} onClose={() => setAuthModalVisible(false)} />
       <ProgressOverlay visible={uploading} progress={uploadProgress} label={editId || editPostId ? 'Saving' : uploadType === 'post' ? 'Publishing' : 'Uploading'} />
-      
-      <Text style={styles.headerTitle}>{editId || editPostId ? `Edit ${editId ? 'Video' : 'Post'}` : uploadType ? `Upload ${uploadType === 'short' ? 'Short' : uploadType === 'post' ? 'Post' : 'Video'}` : 'Create'}</Text>
+
+      <View style={styles.headerRow}>
+        {uploadType && !editId && !editPostId && (
+          <TouchableOpacity style={styles.headerBack} onPress={resetToTypeSelection} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Ionicons name="arrow-back" size={22} color={Colors.text} />
+          </TouchableOpacity>
+        )}
+        <Text style={styles.headerTitle}>{editId || editPostId ? `Edit ${editId ? 'Video' : 'Post'}` : uploadType ? `New ${uploadType === 'short' ? 'Short' : uploadType === 'post' ? 'Post' : 'Video'}` : 'Create'}</Text>
+      </View>
 
       {!editId && !editPostId && !uploadType && (
-        <View style={styles.typeGrid}>
-          {[
-            { key: 'video', label: 'Video', icon: 'videocam-outline' },
-            { key: 'short', label: 'Short', icon: 'phone-portrait-outline' },
-            { key: 'post', label: 'Post', icon: 'document-text-outline' },
-          ].map((item: any) => (
-            <TouchableOpacity key={item.key} style={styles.typeCard} onPress={() => setUploadType(item.key)}>
-              <Ionicons name={item.icon} size={32} color={Colors.primary} />
-              <Text style={styles.typeText}>{item.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <>
+          <Text style={styles.createSubtitle}>What would you like to share today?</Text>
+          <View style={styles.typeGrid}>
+            {[
+              { key: 'video', label: 'Video', icon: 'videocam', desc: 'Long-form' },
+              { key: 'short', label: 'Short', icon: 'flash', desc: 'Vertical' },
+              { key: 'post', label: 'Post', icon: 'document-text', desc: 'Text & image' },
+            ].map((item: any) => (
+              <TouchableOpacity key={item.key} style={styles.typeCard} activeOpacity={0.85} onPress={() => { hapticSelection(); setUploadType(item.key); }}>
+                <View style={styles.typeIconCircle}>
+                  <Ionicons name={item.icon} size={24} color={Colors.primary} />
+                </View>
+                <Text style={styles.typeText}>{item.label}</Text>
+                <Text style={styles.typeDesc}>{item.desc}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </>
       )}
 
       {(editPostId || (!editId && uploadType === 'post')) && (
@@ -458,10 +488,12 @@ export default function UploadScreen() {
           <TextInput style={[styles.input, styles.textArea]} placeholder="Share an update..." multiline value={postText} onChangeText={setPostText} />
           <Text style={styles.label}>Image</Text>
           <TouchableOpacity style={[styles.picker, styles.thumbnailPicker]} onPress={pickPostImage}>
-            {postImage ? <Image source={{ uri: postImage.uri }} style={styles.thumbnailPreview} /> : (
+            {postImage ? <Image source={{ uri: postImage.uri }} style={styles.thumbnailPreview} contentFit="cover" transition={200} /> : (
               <>
-                <Ionicons name="image-outline" size={40} color={Colors.textGray} />
-                <Text style={styles.pickerText}>Select Image</Text>
+                <View style={styles.pickerIconCircle}>
+                  <Ionicons name="image" size={24} color={Colors.primary} />
+                </View>
+                <Text style={styles.pickerText}>Tap to add an image</Text>
               </>
             )}
           </TouchableOpacity>
@@ -495,16 +527,22 @@ export default function UploadScreen() {
       {!editId && !editPostId && uploadType && uploadType !== 'post' && (
         <>
           <Text style={styles.label}>Video File *</Text>
-          <TouchableOpacity style={styles.picker} onPress={pickVideo}>
+          <TouchableOpacity style={styles.picker} onPress={pickVideo} activeOpacity={0.85}>
             {video ? (
-              <View style={styles.fileInfo}>
-                <Ionicons name="videocam" size={24} color={Colors.primary} />
+              <View style={styles.fileSelected}>
+                <View style={styles.fileBadge}>
+                  <Ionicons name="checkmark" size={20} color={Colors.white} />
+                </View>
                 <Text style={styles.fileName} numberOfLines={1}>{video.uri.split('/').pop()}</Text>
+                <Text style={styles.changeHint}>Tap to change</Text>
               </View>
             ) : (
               <>
-                <Ionicons name="cloud-upload-outline" size={40} color={Colors.textGray} />
-                <Text style={styles.pickerText}>Select Video</Text>
+                <View style={styles.pickerIconCircle}>
+                  <Ionicons name="cloud-upload" size={26} color={Colors.primary} />
+                </View>
+                <Text style={styles.pickerText}>Tap to select a video</Text>
+                <Text style={styles.pickerSubText}>MP4 · up to 100MB</Text>
               </>
             )}
           </TouchableOpacity>
@@ -517,11 +555,14 @@ export default function UploadScreen() {
       <Text style={styles.label}>Thumbnail</Text>
       <TouchableOpacity style={[styles.picker, styles.thumbnailPicker]} onPress={pickThumbnail}>
         {thumbnail ? (
-          <Image source={{ uri: thumbnail.uri }} style={styles.thumbnailPreview} />
+          <Image source={{ uri: thumbnail.uri }} style={styles.thumbnailPreview} contentFit="cover" transition={200} />
         ) : (
           <>
-            <Ionicons name="image-outline" size={40} color={Colors.textGray} />
-            <Text style={styles.pickerText}>Select Thumbnail</Text>
+            <View style={styles.pickerIconCircle}>
+              <Ionicons name="image" size={24} color={Colors.primary} />
+            </View>
+            <Text style={styles.pickerText}>Tap to add a thumbnail</Text>
+            <Text style={styles.pickerSubText}>16:9 recommended</Text>
           </>
         )}
       </TouchableOpacity>
@@ -605,15 +646,18 @@ export default function UploadScreen() {
       </>)}
 
       {uploadType && (
-      <TouchableOpacity 
-        style={[styles.uploadButton, uploading && styles.disabledButton]} 
+      <TouchableOpacity
+        style={[styles.uploadButton, uploading && styles.disabledButton]}
         onPress={handleUpload}
         disabled={uploading}
+        activeOpacity={0.85}
       >
-        <Text style={styles.uploadButtonText}>{editId || editPostId ? 'Save Changes' : uploadType === 'post' ? 'Publish Post' : 'Upload Video'}</Text>
+        <Ionicons name={editId || editPostId ? 'checkmark-circle' : 'cloud-upload'} size={20} color={Colors.white} />
+        <Text style={styles.uploadButtonText}>{editId || editPostId ? 'Save Changes' : uploadType === 'post' ? 'Publish Post' : `Upload ${uploadType === 'short' ? 'Short' : 'Video'}`}</Text>
       </TouchableOpacity>
       )}
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -684,11 +728,28 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
   },
+  flex: {
+    flex: 1,
+    backgroundColor: Colors.white,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 6,
+  },
+  headerBack: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: Colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   headerTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontWeight: '800',
     color: Colors.text,
-    marginBottom: 10,
   },
   center: {
     flex: 1,
@@ -791,21 +852,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   label: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: '700',
     color: Colors.text,
     marginBottom: 8,
-    marginTop: 16,
+    marginTop: 18,
   },
   picker: {
-    height: 120,
+    height: 130,
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: Colors.border,
-    borderRadius: 12,
+    borderColor: Colors.primary + '55',
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.primary + '08',
   },
   thumbnailPicker: {
     height: 180,
@@ -813,29 +874,61 @@ const styles = StyleSheet.create({
   thumbnailPreview: {
     width: '100%',
     height: '100%',
-    borderRadius: 10,
+    borderRadius: 14,
+  },
+  pickerIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    backgroundColor: Colors.primary + '14',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
   },
   pickerText: {
-    color: Colors.textGray,
-    marginTop: 8,
-  },
-  fileInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-  },
-  fileName: {
-    marginLeft: 10,
     color: Colors.text,
     fontSize: 14,
+    fontWeight: '700',
+  },
+  pickerSubText: {
+    color: Colors.textGray,
+    fontSize: 12,
+    marginTop: 3,
+  },
+  fileSelected: {
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  fileBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#10B981',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  fileName: {
+    color: Colors.text,
+    fontSize: 14,
+    fontWeight: '600',
+    maxWidth: 240,
+  },
+  changeHint: {
+    color: Colors.primary,
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: 4,
   },
   input: {
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    fontSize: 15,
     color: Colors.text,
+    backgroundColor: '#F9FAFB',
   },
   textArea: {
     height: 100,
@@ -844,50 +937,82 @@ const styles = StyleSheet.create({
   selectContainer: {
     marginBottom: 6,
   },
+  createSubtitle: {
+    fontSize: 14,
+    color: Colors.textGray,
+    marginTop: 2,
+    marginBottom: 18,
+  },
   typeGrid: {
     flexDirection: 'row',
-    gap: 10,
-    marginTop: 16,
+    gap: 12,
   },
   typeCard: {
     flex: 1,
-    minHeight: 110,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 8,
+    minHeight: 128,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  typeIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: Colors.primary + '14',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
   typeText: {
-    marginTop: 8,
     color: Colors.text,
-    fontWeight: '700',
+    fontWeight: '800',
+    fontSize: 15,
+  },
+  typeDesc: {
+    color: Colors.textGray,
+    fontSize: 11,
+    marginTop: 2,
   },
   selectTrigger: {
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: 8,
-    minHeight: 48,
-    paddingHorizontal: 12,
+    borderRadius: 12,
+    minHeight: 50,
+    paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    backgroundColor: '#F9FAFB',
   },
   selectValue: {
     color: Colors.text,
+    fontSize: 15,
+    fontWeight: '500',
   },
   selectMenu: {
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: 8,
+    borderRadius: 12,
     marginTop: 6,
     overflow: 'hidden',
     backgroundColor: Colors.white,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
   },
   selectOption: {
-    paddingVertical: 12,
-    paddingHorizontal: 12,
+    paddingVertical: 13,
+    paddingHorizontal: 14,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
   },
@@ -900,11 +1025,19 @@ const styles = StyleSheet.create({
   },
   uploadButton: {
     backgroundColor: Colors.primary,
-    borderRadius: 8,
+    borderRadius: 999,
     paddingVertical: 16,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
     marginTop: 32,
     marginBottom: 40,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 4,
   },
   disabledButton: {
     opacity: 0.6,
@@ -922,11 +1055,11 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   progressBox: {
-    width: 220,
+    width: 240,
     alignItems: 'center',
     backgroundColor: Colors.white,
-    borderRadius: 8,
-    padding: 24,
+    borderRadius: 24,
+    padding: 28,
   },
   progressRing: {
     width: 104,

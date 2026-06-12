@@ -1,10 +1,14 @@
 import { showAlert } from './AppAlert';
 import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Modal, TextInput, Alert, Pressable, Share } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Alert, Pressable, Share } from 'react-native';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '../constants/Colors';
 import { useRouter } from 'expo-router';
 import { formatTimeAgo, formatViews } from '../utils/formatDate';
+import { hapticSelection } from '../utils/haptics';
 import api from '../services/api';
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
@@ -37,8 +41,14 @@ interface VideoCardProps {
 
 const VideoCard: React.FC<VideoCardProps> = ({ video, onMenuPress, onPlaylistPress, onReportPress, onEditPress, onDeletePress }) => {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
   const [menuVisible, setMenuVisible] = useState(false);
+
+  const openMenu = () => {
+    hapticSelection();
+    setMenuVisible(true);
+  };
 
   const isOwner = user?._id === video.owner?._id;
 
@@ -117,10 +127,21 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onMenuPress, onPlaylistPre
   return (
     <TouchableOpacity
       style={styles.container}
+      activeOpacity={0.92}
       onPress={() => router.push(`/video/${video._id}`)}
     >
       <View style={styles.thumbnailContainer}>
-        <Image source={{ uri: video?.thumbnail || FALLBACK_IMAGE }} style={styles.thumbnail} />
+        <Image
+          source={{ uri: video?.thumbnail || FALLBACK_IMAGE }}
+          style={styles.thumbnail}
+          contentFit="cover"
+          transition={250}
+        />
+        <LinearGradient
+          colors={['transparent', 'rgba(0,0,0,0.5)']}
+          style={styles.thumbGradient}
+          pointerEvents="none"
+        />
         <View style={styles.durationBadge}>
           <Text style={styles.durationText}>{formatDuration(video?.duration || 0)}</Text>
         </View>
@@ -128,7 +149,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onMenuPress, onPlaylistPre
 
       <View style={styles.detailsContainer}>
         <TouchableOpacity onPress={() => video?.owner?._id && router.push(`/channel/${video.owner._id}`)}>
-          <Image source={{ uri: video?.owner?.avatar || FALLBACK_AVATAR }} style={styles.avatar} />
+          <Image source={{ uri: video?.owner?.avatar || FALLBACK_AVATAR }} style={styles.avatar} contentFit="cover" transition={200} />
         </TouchableOpacity>
         <View style={styles.textContainer}>
           <Text style={styles.title} numberOfLines={2}>
@@ -136,20 +157,21 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onMenuPress, onPlaylistPre
           </Text>
           <Text
             style={styles.metadata}
+            numberOfLines={1}
             onPress={() => video?.owner?._id && router.push(`/channel/${video.owner._id}`)}
           >
-            {(video?.owner?.channelName || video?.owner?.name || 'Unknown')} - {formatViews(video?.views || 0)} - {formatTimeAgo(video?.createdAt)}
+            {(video?.owner?.channelName || video?.owner?.name || 'Unknown')} • {formatViews(video?.views || 0)} views • {formatTimeAgo(video?.createdAt)}
           </Text>
         </View>
-        <TouchableOpacity style={styles.menuButton} onPress={(e) => {
+        <TouchableOpacity style={styles.menuButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={(e) => {
           e.stopPropagation();
           if (onMenuPress) {
             onMenuPress();
           } else {
-            setMenuVisible(true);
+            openMenu();
           }
         }}>
-          <Ionicons name="ellipsis-vertical" size={18} color={Colors.text} />
+          <Ionicons name="ellipsis-vertical" size={18} color={Colors.textGray} />
         </TouchableOpacity>
       </View>
 
@@ -160,11 +182,12 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onMenuPress, onPlaylistPre
         animationType="fade"
         onRequestClose={() => setMenuVisible(false)}
       >
-        <Pressable 
-          style={styles.modalOverlay} 
+        <Pressable
+          style={styles.modalOverlay}
           onPress={() => setMenuVisible(false)}
         >
-          <View style={styles.menuContent}>
+          <Pressable style={[styles.menuContent, { paddingBottom: Math.max(insets.bottom, 12) + 8 }]} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.grabber} />
             {isOwner && (
               <>
                 <TouchableOpacity style={styles.menuItem} onPress={handleEdit}>
@@ -198,7 +221,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onMenuPress, onPlaylistPre
             <TouchableOpacity style={styles.cancelItem} onPress={() => setMenuVisible(false)}>
               <Text style={styles.cancelText}>Cancel</Text>
             </TouchableOpacity>
-          </View>
+          </Pressable>
         </Pressable>
       </Modal>
     </TouchableOpacity>
@@ -207,7 +230,16 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onMenuPress, onPlaylistPre
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 20,
+    marginHorizontal: 12,
+    marginBottom: 16,
+    backgroundColor: Colors.white,
+    borderRadius: 18,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   thumbnailContainer: {
     position: 'relative',
@@ -217,14 +249,21 @@ const styles = StyleSheet.create({
     height: 200,
     backgroundColor: '#E5E7EB',
   },
+  thumbGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 60,
+  },
   durationBadge: {
     position: 'absolute',
     bottom: 8,
     right: 8,
     backgroundColor: 'rgba(0,0,0,0.8)',
-    paddingHorizontal: 4,
+    paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: 6,
   },
   durationText: {
     color: Colors.white,
@@ -233,23 +272,27 @@ const styles = StyleSheet.create({
   },
   detailsContainer: {
     flexDirection: 'row',
+    alignItems: 'center',
     padding: 12,
   },
   avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     marginRight: 12,
     backgroundColor: '#E5E7EB',
+    borderWidth: 1.5,
+    borderColor: Colors.primary + '33',
   },
   textContainer: {
     flex: 1,
   },
   title: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
     color: Colors.text,
-    marginBottom: 4,
+    marginBottom: 3,
+    lineHeight: 20,
   },
   metadata: {
     fontSize: 12,
@@ -257,6 +300,7 @@ const styles = StyleSheet.create({
   },
   menuButton: {
     paddingLeft: 8,
+    alignSelf: 'flex-start',
   },
   modalOverlay: {
     flex: 1,
@@ -265,9 +309,18 @@ const styles = StyleSheet.create({
   },
   menuContent: {
     backgroundColor: Colors.white,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+  },
+  grabber: {
+    alignSelf: 'center',
+    width: 40,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: Colors.border,
+    marginBottom: 10,
   },
   menuItem: {
     flexDirection: 'row',
@@ -282,11 +335,11 @@ const styles = StyleSheet.create({
     color: Colors.text,
   },
   cancelItem: {
-    marginTop: 10,
+    marginTop: 12,
     paddingVertical: 15,
     alignItems: 'center',
     backgroundColor: Colors.background,
-    borderRadius: 10,
+    borderRadius: 14,
   },
   cancelText: {
     fontSize: 16,

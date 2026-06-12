@@ -1,6 +1,8 @@
 import { showAlert } from '../../components/AppAlert';
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, FlatList, StyleSheet, ActivityIndicator, Text, Modal, TouchableOpacity, TextInput, Alert, Image } from 'react-native';
+import { View, FlatList, StyleSheet, ActivityIndicator, Text, Modal, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -191,19 +193,34 @@ export default function HomeScreen() {
   const renderShortsShelf = (shorts: any[]) => (
     <View style={styles.shortsShelf}>
       <View style={styles.shelfHeader}>
-        <Ionicons name="flash" size={20} color={Colors.primary} />
-        <Text style={styles.shelfTitle}>Shorts</Text>
+        <View style={styles.shelfHeaderLeft}>
+          <View style={styles.shelfIconBadge}>
+            <Ionicons name="flash" size={16} color={Colors.white} />
+          </View>
+          <Text style={styles.shelfTitle}>Shorts</Text>
+        </View>
+        <TouchableOpacity style={styles.seeAllBtn} onPress={() => router.push('/shorts')}>
+          <Text style={styles.seeAllText}>See all</Text>
+          <Ionicons name="chevron-forward" size={14} color={Colors.primary} />
+        </TouchableOpacity>
       </View>
       <View style={styles.shortsGrid}>
         {shorts.map((item) => (
-          <TouchableOpacity 
-            key={item._id} 
+          <TouchableOpacity
+            key={item._id}
             style={styles.shortGridItem}
+            activeOpacity={0.9}
             onPress={() => router.push({ pathname: '/shorts', params: { initialShortId: item._id } })}
           >
-            <Image source={{ uri: item.thumbnail }} style={styles.shortThumbnail} />
+            <View style={styles.shortThumbWrap}>
+              <Image source={{ uri: item.thumbnail }} style={styles.shortThumbnail} contentFit="cover" transition={250} />
+              <LinearGradient colors={['transparent', 'rgba(0,0,0,0.55)']} style={styles.shortThumbGradient} pointerEvents="none" />
+              <View style={styles.shortPlayBadge}>
+                <Ionicons name="play" size={12} color={Colors.white} />
+                <Text style={styles.shortViewsOverlay}>{formatViews(item.views || 0)}</Text>
+              </View>
+            </View>
             <Text style={styles.shortTitle} numberOfLines={1} ellipsizeMode="tail">{item.title}</Text>
-            <Text style={styles.shortViews}>{formatViews(item.views || 0)} views</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -341,78 +358,127 @@ const styles = StyleSheet.create({
   },
   reportBox: {
     backgroundColor: Colors.white,
-    borderRadius: 8,
-    padding: 16,
+    borderRadius: 20,
+    padding: 20,
   },
   reportTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '800',
     color: Colors.text,
     marginBottom: 12,
   },
   reportInput: {
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: 8,
+    borderRadius: 12,
     minHeight: 90,
-    padding: 10,
+    padding: 12,
     textAlignVertical: 'top',
+    backgroundColor: Colors.background,
   },
   reportActions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
-    marginTop: 14,
+    marginTop: 16,
     gap: 18,
   },
   cancelText: { color: Colors.textGray, fontWeight: '600' },
-  submitReport: { backgroundColor: Colors.primary, borderRadius: 8, paddingHorizontal: 18, paddingVertical: 10 },
+  submitReport: { backgroundColor: Colors.primary, borderRadius: 999, paddingHorizontal: 22, paddingVertical: 11 },
   submitReportText: { color: Colors.white, fontWeight: 'bold' },
   // Shorts Shelf Styles
   shortsShelf: {
-    paddingVertical: 15,
+    paddingVertical: 16,
     backgroundColor: Colors.white,
-    marginVertical: 10,
+    marginBottom: 16,
+    marginHorizontal: 12,
+    borderRadius: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   shelfHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 15,
-    marginBottom: 15,
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    marginBottom: 14,
+  },
+  shelfHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  shelfIconBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
   },
   shelfTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 8,
+    fontSize: 17,
+    fontWeight: '800',
     color: Colors.text,
+  },
+  seeAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  seeAllText: {
+    color: Colors.primary,
+    fontWeight: '700',
+    fontSize: 13,
+    marginRight: 2,
   },
   shortsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 10,
+    paddingHorizontal: 9,
   },
   shortGridItem: {
     width: '50%',
     padding: 5,
-    marginBottom: 10,
+    marginBottom: 8,
+  },
+  shortThumbWrap: {
+    position: 'relative',
+    borderRadius: 14,
+    overflow: 'hidden',
   },
   shortThumbnail: {
     width: '100%',
     aspectRatio: 9 / 16,
-    borderRadius: 12,
     backgroundColor: '#E5E7EB',
   },
+  shortThumbGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 50,
+  },
+  shortPlayBadge: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  shortViewsOverlay: {
+    color: Colors.white,
+    fontSize: 11,
+    fontWeight: '700',
+  },
   shortTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: Colors.text,
-    marginTop: 8,
-    paddingHorizontal: 2,
-  },
-  shortViews: {
-    fontSize: 12,
-    color: Colors.textGray,
-    marginTop: 2,
+    marginTop: 7,
     paddingHorizontal: 2,
   },
 });

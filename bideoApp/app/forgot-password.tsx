@@ -61,7 +61,9 @@ export default function ForgotPasswordScreen() {
         </TouchableOpacity>
 
         <View style={styles.header}>
-          <Ionicons name="lock-closed-outline" size={60} color={Colors.primary} />
+          <View style={styles.iconCircle}>
+            <Ionicons name="lock-closed" size={36} color={Colors.primary} />
+          </View>
           <Text style={styles.title}>Forgot Password</Text>
           <Text style={styles.subtitle}>
             {step === 1 
@@ -75,6 +77,7 @@ export default function ForgotPasswordScreen() {
             <TextInput
               style={styles.input}
               placeholder="Phone Number"
+              placeholderTextColor={Colors.textGray}
               value={phone}
               onChangeText={(v) => setPhone(v.replace(/\D/g, '').slice(0, 10))}
               keyboardType="phone-pad"
@@ -93,6 +96,7 @@ export default function ForgotPasswordScreen() {
             <TextInput
               style={styles.input}
               placeholder="Enter OTP (1234)"
+              placeholderTextColor={Colors.textGray}
               value={otp}
               onChangeText={setOtp}
               keyboardType="number-pad"
@@ -102,6 +106,7 @@ export default function ForgotPasswordScreen() {
               <TextInput
                 style={[styles.input, styles.passwordInput]}
                 placeholder="New Password"
+                placeholderTextColor={Colors.textGray}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
@@ -152,6 +157,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
   },
+  iconCircle: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    backgroundColor: Colors.primary + '14',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -179,6 +192,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     fontSize: 16,
     color: Colors.text,
+    backgroundColor: '#F9FAFB',
   },
   passwordRow: {
     width: '100%',
@@ -189,11 +203,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 16,
     paddingRight: 8,
+    backgroundColor: '#F9FAFB',
   },
   passwordInput: {
     flex: 1,
     marginBottom: 0,
     borderWidth: 0,
+    backgroundColor: 'transparent',
   },
   eyeButton: {
     padding: 10,
@@ -202,10 +218,15 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     width: '100%',
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 4,
   },
   buttonText: {
     color: Colors.white,

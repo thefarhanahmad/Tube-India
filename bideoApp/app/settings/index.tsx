@@ -1,6 +1,7 @@
 import { showAlert } from '../../components/AppAlert';
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import Colors from '../../constants/Colors';
@@ -42,6 +43,12 @@ export default function SettingsScreen() {
   };
 
   const settingsItems = [
+    {
+      title: 'Earnings',
+      icon: 'wallet-outline',
+      onPress: () => router.push('/earnings'),
+      color: Colors.primary,
+    },
     {
       title: 'About',
       icon: 'information-circle-outline',
@@ -110,14 +117,9 @@ export default function SettingsScreen() {
             <TouchableOpacity
               style={styles.earningsBtn}
               activeOpacity={0.85}
-              onPress={() =>
-                showAlert(
-                  'Earnings — Coming Soon',
-                  'We are currently building the payment gateway and creator monetization. You will be able to track and withdraw your earnings here very soon. Thanks for your patience!'
-                )
-              }
+              onPress={() => router.push('/earnings')}
             >
-              <Text style={styles.earningsBtnText}>Learn more</Text>
+              <Text style={styles.earningsBtnText}>View earnings</Text>
               <Ionicons name="arrow-forward" size={16} color={Colors.primary} />
             </TouchableOpacity>
           </View>

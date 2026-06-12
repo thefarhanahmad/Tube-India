@@ -64,12 +64,13 @@ const PlaylistModal: React.FC<PlaylistModalProps> = ({ visible, onClose, videoId
     <Modal visible={visible} transparent animationType="slide" statusBarTranslucent>
       <KeyboardAvoidingView
         style={styles.overlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.content}>
+          <View style={styles.grabber} />
           <View style={styles.header}>
-            <Text style={styles.title}>Save video to...</Text>
-            <TouchableOpacity onPress={onClose}>
+            <Text style={styles.title}>Save video to…</Text>
+            <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Ionicons name="close" size={24} color={Colors.text} />
             </TouchableOpacity>
           </View>
@@ -95,11 +96,18 @@ const PlaylistModal: React.FC<PlaylistModalProps> = ({ visible, onClose, videoId
                     <TextInput
                       style={styles.input}
                       placeholder="Enter playlist name"
+                      placeholderTextColor={Colors.textGray}
                       value={newPlaylistName}
                       onChangeText={setNewPlaylistName}
                       autoFocus
+                      onSubmitEditing={createAndAdd}
+                      returnKeyType="done"
                     />
-                    <TouchableOpacity style={styles.createBtn} onPress={createAndAdd}>
+                    <TouchableOpacity
+                      style={[styles.createBtn, !newPlaylistName.trim() && styles.createBtnDisabled]}
+                      onPress={createAndAdd}
+                      disabled={!newPlaylistName.trim()}
+                    >
                       <Text style={styles.createBtnText}>Create</Text>
                     </TouchableOpacity>
                   </View>
@@ -126,20 +134,31 @@ const styles = StyleSheet.create({
   },
   content: {
     backgroundColor: Colors.white,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 24,
     maxHeight: '70%',
+  },
+  grabber: {
+    alignSelf: 'center',
+    width: 40,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: Colors.border,
+    marginBottom: 14,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   title: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '800',
+    color: Colors.text,
   },
   playlistItem: {
     flexDirection: 'row',
@@ -165,22 +184,35 @@ const styles = StyleSheet.create({
     marginLeft: 15,
   },
   createBox: {
-    paddingVertical: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 16,
   },
   input: {
-    borderBottomWidth: 2,
-    borderBottomColor: Colors.primary,
-    fontSize: 16,
-    paddingVertical: 8,
-    marginBottom: 10,
+    flex: 1,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    fontSize: 15,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    color: Colors.text,
   },
   createBtn: {
-    alignSelf: 'flex-end',
+    backgroundColor: Colors.primary,
+    borderRadius: 999,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  createBtnDisabled: {
+    opacity: 0.45,
   },
   createBtnText: {
-    color: Colors.primary,
-    fontWeight: 'bold',
-    fontSize: 16,
+    color: Colors.white,
+    fontWeight: '700',
+    fontSize: 15,
   },
 });
 

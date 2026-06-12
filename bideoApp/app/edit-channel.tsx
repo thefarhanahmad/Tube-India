@@ -1,11 +1,14 @@
 import { showAlert } from '../components/AppAlert';
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, ScrollView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useSelector, useDispatch } from 'react-redux';
 import { useRouter } from 'expo-router';
 import Colors from '../constants/Colors';
+import { hapticLight, hapticSelection } from '../utils/haptics';
 import api from '../services/api';
 import { RootState } from '../redux/store';
 import { loginSuccess } from '../redux/slices/authSlice';
@@ -40,6 +43,7 @@ export default function EditChannelScreen() {
   const [loading, setLoading] = useState(false);
 
   const pickAvatar = async () => {
+    hapticSelection();
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       showAlert('Permission Denied', 'We need access to your photos to update your profile picture.');
@@ -63,6 +67,7 @@ export default function EditChannelScreen() {
   };
 
   const pickCoverImage = async () => {
+    hapticSelection();
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       showAlert('Permission Denied', 'We need access to your photos to update your channel banner.');
@@ -90,6 +95,7 @@ export default function EditChannelScreen() {
       showAlert('Error', 'Channel name is required');
       return;
     }
+    hapticLight();
 
     setLoading(true);
     try {
@@ -171,12 +177,17 @@ export default function EditChannelScreen() {
           <View style={styles.previewContainer}>
             <TouchableOpacity style={styles.coverSelector} onPress={pickCoverImage}>
               {getAvatarUri(coverImage) ? (
-                <Image source={{ uri: getAvatarUri(coverImage)! }} style={styles.previewCover} />
+                <Image source={{ uri: getAvatarUri(coverImage)! }} style={styles.previewCover} contentFit="cover" transition={200} />
               ) : (
-                <View style={styles.coverPlaceholder}>
-                  <Ionicons name="image-outline" size={32} color={Colors.textGray} />
+                <LinearGradient
+                  colors={[Colors.primary, Colors.secondary]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.coverPlaceholder}
+                >
+                  <Ionicons name="image-outline" size={30} color={Colors.white} />
                   <Text style={styles.placeholderText}>Add Banner</Text>
-                </View>
+                </LinearGradient>
               )}
               <View style={styles.cameraBadgeCover}>
                 <Ionicons name="camera" size={18} color={Colors.white} />
@@ -187,7 +198,7 @@ export default function EditChannelScreen() {
               <TouchableOpacity style={styles.avatarSelector} onPress={pickAvatar}>
                 <View style={styles.avatarWrapper}>
                   {getAvatarUri(avatar) ? (
-                    <Image source={{ uri: getAvatarUri(avatar)! }} style={styles.previewAvatar} />
+                    <Image source={{ uri: getAvatarUri(avatar)! }} style={styles.previewAvatar} contentFit="cover" transition={200} />
                   ) : (
                     <View style={styles.avatarPlaceholder}>
                       <Ionicons name="person" size={32} color={Colors.textGray} />
@@ -214,6 +225,7 @@ export default function EditChannelScreen() {
             <TextInput
               style={styles.textInput}
               placeholder="Your public name"
+              placeholderTextColor={Colors.textGray}
               value={name}
               onChangeText={setName}
             />
@@ -224,6 +236,7 @@ export default function EditChannelScreen() {
             <TextInput
               style={styles.textInput}
               placeholder="e.g. Cooking with Sam"
+              placeholderTextColor={Colors.textGray}
               value={channelName}
               onChangeText={setChannelName}
             />
@@ -235,6 +248,7 @@ export default function EditChannelScreen() {
             <TextInput
               style={[styles.textInput, styles.textArea]}
               placeholder="Tell the world what your channel is about..."
+              placeholderTextColor={Colors.textGray}
               multiline
               numberOfLines={4}
               value={about}
@@ -342,9 +356,9 @@ const styles = StyleSheet.create({
   },
   placeholderText: {
     marginTop: 8,
-    color: Colors.textGray,
+    color: Colors.white,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   cameraBadgeCover: {
     position: 'absolute',

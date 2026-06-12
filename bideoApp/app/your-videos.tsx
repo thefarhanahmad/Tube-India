@@ -1,6 +1,7 @@
 import { showAlert } from '../components/AppAlert';
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, Modal, Pressable, Share, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, Modal, Pressable, Share } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import Colors from '../constants/Colors';

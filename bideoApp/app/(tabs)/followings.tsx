@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import Colors from '../../constants/Colors';
@@ -9,6 +10,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import api from '../../services/api';
 import AuthModal from '../../components/AuthModal';
+import { EmptyState } from '../../components/ListStates';
 const FALLBACK_AVATAR = 'https://via.placeholder.com/80x80.png?text=User';
 
 export default function FollowingsScreen() {
@@ -102,7 +104,7 @@ export default function FollowingsScreen() {
               style={styles.channelItem}
               onPress={() => item.channel?._id && router.push(`/channel/${item.channel._id}`)}
             >
-              <Image source={{ uri: item.channel?.avatar || FALLBACK_AVATAR }} style={styles.channelAvatar} />
+              <Image source={{ uri: item.channel?.avatar || FALLBACK_AVATAR }} style={styles.channelAvatar} contentFit="cover" transition={200} />
               <Text style={styles.channelName} numberOfLines={1}>{item.channel.channelName || item.channel.name}</Text>
             </TouchableOpacity>
           ))}
@@ -130,9 +132,11 @@ export default function FollowingsScreen() {
         ListHeaderComponent={<Text style={styles.sectionTitle}>{feedItems.length > 0 ? 'Recent Activity' : ''}</Text>}
         ListEmptyComponent={
           !loading ? (
-            <View style={styles.center}>
-              <Text style={styles.emptyText}>No recent activity from followed channels</Text>
-            </View>
+            <EmptyState
+              icon="people-outline"
+              title="No recent activity"
+              subtitle="Follow creators you love and their latest videos and posts will appear here."
+            />
           ) : null
         }
         refreshing={loading}
@@ -237,10 +241,13 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   channelAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginBottom: 4,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    marginBottom: 5,
+    backgroundColor: Colors.border,
+    borderWidth: 2,
+    borderColor: Colors.primary + '40',
   },
   channelName: {
     fontSize: 11,
@@ -273,7 +280,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: 8,
+    borderRadius: 999,
     paddingVertical: 9,
     alignItems: 'center',
   },

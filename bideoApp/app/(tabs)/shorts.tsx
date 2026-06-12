@@ -1,8 +1,9 @@
 import { showAlert } from '../../components/AppAlert';
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, Dimensions, TouchableOpacity, ActivityIndicator, ScrollView, Platform, Modal, Pressable, Share, Alert, Animated } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Dimensions, TouchableOpacity, ActivityIndicator, ScrollView, Platform, Modal, Pressable, Share, TextInput, Animated } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import { useIsFocused } from '@react-navigation/native';
 import Colors from '../../constants/Colors';
 import api from '../../services/api';
@@ -13,6 +14,7 @@ import CommentList from '../../components/CommentList';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatViews } from '../../utils/formatDate';
+import { hapticLight } from '../../utils/haptics';
 
 const FALLBACK_AVATAR = 'https://via.placeholder.com/80x80.png?text=User';
 
@@ -35,6 +37,8 @@ export default function ShortsScreen() {
 
   const [menuVisible, setMenuVisible] = useState(false);
   const [selectedShort, setSelectedShort] = useState<any>(null);
+  const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [reportReason, setReportReason] = useState('');
 
   useEffect(() => {
     if (initialShortId && shorts.length > 0) {
@@ -107,6 +111,7 @@ export default function ShortsScreen() {
       setAuthModalVisible(true);
       return;
     }
+    hapticLight();
 
     setShorts(prev => prev.map(s => {
       if (s._id === shortId) {
@@ -131,6 +136,7 @@ export default function ShortsScreen() {
       setAuthModalVisible(true);
       return;
     }
+    hapticLight();
 
     const prevShorts = [...shorts];
     setShorts(prev => prev.map(s => {
@@ -203,29 +209,24 @@ export default function ShortsScreen() {
     router.push({ pathname: '/upload', params: { editId: selectedShort._id } });
   };
 
-  const handleReport = async () => {
+  const handleReport = () => {
     if (!selectedShort) return;
     setMenuVisible(false);
     if (!isAuthenticated) return setAuthModalVisible(true);
-    
-    Alert.prompt(
-      'Report Short',
-      'Reason for reporting:',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Report',
-          onPress: async (reason?: string) => {
-            try {
-              await api.post(`/videos/${selectedShort._id}/report`, { reason });
-              showAlert('Report sent', 'Thanks for your feedback');
-            } catch (err) {
-              showAlert('Error', 'Failed to send report');
-            }
-          }
-        }
-      ]
-    );
+    setReportReason('');
+    setReportModalVisible(true);
+  };
+
+  const submitReport = async () => {
+    if (!selectedShort) return;
+    try {
+      await api.post(`/videos/${selectedShort._id}/report`, { reason: reportReason });
+      setReportModalVisible(false);
+      setReportReason('');
+      showAlert('Report sent', 'Thanks for your feedback');
+    } catch (err) {
+      showAlert('Error', 'Failed to send report');
+    }
   };
 
   const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
@@ -318,6 +319,31 @@ export default function ShortsScreen() {
         </Pressable>
       </Modal>
 
+      {/* Report Modal (themed, works on Android unlike Alert.prompt) */}
+      <Modal visible={reportModalVisible} transparent animationType="fade" onRequestClose={() => setReportModalVisible(false)}>
+        <View style={styles.reportOverlay}>
+          <View style={styles.reportBox}>
+            <Text style={styles.reportTitle}>Report short</Text>
+            <TextInput
+              style={styles.reportInput}
+              placeholder="Tell us what is wrong"
+              placeholderTextColor={Colors.textGray}
+              value={reportReason}
+              onChangeText={setReportReason}
+              multiline
+            />
+            <View style={styles.reportActions}>
+              <TouchableOpacity onPress={() => { setReportModalVisible(false); setReportReason(''); }}>
+                <Text style={styles.reportCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.reportSubmitBtn} onPress={submitReport}>
+                <Text style={styles.reportSubmitText}>Submit</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <FlatList
         ref={flatListRef}
         data={shorts}
@@ -361,7 +387,9 @@ export default function ShortsScreen() {
 
 const ShortItem = ({ item, index, activeVideoIndex, containerHeight, isFocused, insets, user, onLike, onCommentClick, onShare, onMenuClick, onFollow }: any) => {
   const router = useRouter();
-  const videoRef = useRef<Video>(null);
+  const player = useVideoPlayer(item.videoUrl, (p) => {
+    p.loop = true;
+  });
   const [isPaused, setIsPaused] = useState(false);
   const [showIcon, setShowIcon] = useState(false);
   const [iconName, setIconName] = useState<'play' | 'pause'>('play');
@@ -370,24 +398,29 @@ const ShortItem = ({ item, index, activeVideoIndex, containerHeight, isFocused, 
 
   const isActive = isFocused && activeVideoIndex === index;
 
+  // Reset the manual pause state whenever this short leaves the viewport.
   useEffect(() => {
     if (!isActive) {
       setIsPaused(false);
     }
   }, [isActive]);
 
-  const togglePlayPause = async () => {
-    if (!videoRef.current) return;
-    
+  // Only the active, un-paused short plays; everything else pauses.
+  useEffect(() => {
+    try {
+      if (isActive && !isPaused) {
+        player.play();
+      } else {
+        player.pause();
+      }
+    } catch {}
+  }, [isActive, isPaused, player]);
+
+  const togglePlayPause = () => {
     const newPausedState = !isPaused;
     setIsPaused(newPausedState);
     setIconName(newPausedState ? 'pause' : 'play');
-    
-    if (newPausedState) {
-      await videoRef.current.pauseAsync();
-    } else {
-      await videoRef.current.playAsync();
-    }
+    // Actual play/pause is driven by the effect above.
 
     // Show animation
     setShowIcon(true);
@@ -411,18 +444,20 @@ const ShortItem = ({ item, index, activeVideoIndex, containerHeight, isFocused, 
   return (
     <View style={[styles.shortItem, { height: containerHeight }]}>
       <Pressable style={styles.videoContainer} onPress={togglePlayPause}>
-        <Video
-          ref={videoRef}
-          source={{ uri: item.videoUrl }}
-          style={styles.fullVideo}
-          resizeMode={ResizeMode.COVER}
-          shouldPlay={isActive && !isPaused}
-          isLooping
-          isMuted={false}
-          posterSource={{ uri: item.thumbnail }}
-          usePoster
+        {/* Thumbnail underlay shows instantly while the video buffers */}
+        <Image
+          source={{ uri: item.thumbnail }}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          transition={150}
         />
-        
+        <VideoView
+          player={player}
+          style={styles.fullVideo}
+          contentFit="cover"
+          nativeControls={false}
+        />
+
         {showIcon && (
           <View style={StyleSheet.absoluteFill}>
             <View style={styles.iconOverlay}>
@@ -655,4 +690,41 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.textGray,
   },
+  reportOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  reportBox: {
+    backgroundColor: Colors.white,
+    borderRadius: 20,
+    padding: 20,
+  },
+  reportTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: Colors.text,
+    marginBottom: 12,
+  },
+  reportInput: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 12,
+    minHeight: 90,
+    padding: 12,
+    textAlignVertical: 'top',
+    backgroundColor: Colors.background,
+    color: Colors.text,
+  },
+  reportActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginTop: 16,
+    gap: 18,
+  },
+  reportCancelText: { color: Colors.textGray, fontWeight: '600' },
+  reportSubmitBtn: { backgroundColor: Colors.primary, borderRadius: 999, paddingHorizontal: 22, paddingVertical: 11 },
+  reportSubmitText: { color: Colors.white, fontWeight: 'bold' },
 });

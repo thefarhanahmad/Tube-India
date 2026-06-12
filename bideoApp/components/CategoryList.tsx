@@ -1,6 +1,7 @@
 import React from 'react';
 import { ScrollView, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Colors from '../constants/Colors';
+import { hapticSelection } from '../utils/haptics';
 
 interface CategoryListProps {
   categories?: string[];
@@ -19,11 +20,12 @@ const CategoryList: React.FC<CategoryListProps> = ({ categories = ['All'], selec
       {categories.map((category) => (
         <TouchableOpacity
           key={category}
+          activeOpacity={0.8}
           style={[
             styles.categoryButton,
             selectedCategory === category && styles.selectedCategoryButton,
           ]}
-          onPress={() => onSelectCategory(category)}
+          onPress={() => { hapticSelection(); onSelectCategory(category); }}
         >
           <Text
             style={[
@@ -53,20 +55,20 @@ const styles = StyleSheet.create({
   },
   categoryButton: {
     paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: '#F2F2F2',
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: '#F2F3F5',
     marginRight: 8,
-    height: 34,
+    height: 36,
     justifyContent: 'center',
   },
   selectedCategoryButton: {
-    backgroundColor: Colors.text,
+    backgroundColor: Colors.primary,
   },
   categoryText: {
     color: Colors.text,
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   selectedCategoryText: {
     color: Colors.white,
