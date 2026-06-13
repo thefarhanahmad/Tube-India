@@ -1,6 +1,11 @@
-import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Landing from './pages/Landing';
 import Login from './pages/Login';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
+import Guidelines from './pages/Guidelines';
+import About from './pages/About';
+import Contact from './pages/Contact';
 import AdminLayout from './components/AdminLayout';
 import DashboardHome from './pages/DashboardHome';
 import Users from './pages/Users';
@@ -9,23 +14,43 @@ import Videos from './pages/Videos';
 import Reports from './pages/Reports';
 import './App.css';
 
+const isAuthed = () => !!localStorage.getItem('admin_token');
+
 const PrivateRoute = ({ children }) => {
-  const isAuth = !!localStorage.getItem('admin_token');
-  return isAuth ? children : <Navigate to="/login" replace />;
+  return isAuthed() ? children : <Navigate to="/login" replace />;
 };
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={!!localStorage.getItem('admin_token') ? <Navigate to="/" replace /> : <Login />} />
-        <Route path="/" element={<PrivateRoute><AdminLayout /></PrivateRoute>}>
+        {/* Public marketing site */}
+        <Route path="/" element={<Landing />} />
+
+        {/* Public info & legal pages */}
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/guidelines" element={<Guidelines />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+
+        {/* Admin login */}
+        <Route
+          path="/login"
+          element={isAuthed() ? <Navigate to="/admin" replace /> : <Login />}
+        />
+
+        {/* Protected admin dashboard */}
+        <Route path="/admin" element={<PrivateRoute><AdminLayout /></PrivateRoute>}>
           <Route index element={<DashboardHome />} />
           <Route path="users" element={<Users />} />
           <Route path="categories" element={<Categories />} />
           <Route path="videos" element={<Videos />} />
           <Route path="reports" element={<Reports />} />
         </Route>
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

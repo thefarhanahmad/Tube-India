@@ -77,7 +77,7 @@ exports.resetPassword = async (req, res, next) => {
 // @access  Public
 exports.googleLogin = async (req, res, next) => {
   try {
-    const { name, email, avatar } = req.body;
+    const { name, email, avatar: providedAvatar } = req.body;
 
     let user = await User.findOne({ email }).select('+password');
 
@@ -85,7 +85,7 @@ exports.googleLogin = async (req, res, next) => {
       user = await User.create({
         name,
         email,
-        avatar: normalizeAvatar(avatar),
+        avatar: normalizeAvatar(providedAvatar),
         authProvider: 'google',
       });
     } else if (!user.authProvider) {
@@ -100,6 +100,7 @@ exports.googleLogin = async (req, res, next) => {
 };
 
 const cloudinary = require('cloudinary').v2;
+const { imageUploadOptions } = require('../utils/cloudinary');
 
 // @desc    Update current user channel
 // @route   PUT /api/auth/channel
@@ -107,27 +108,27 @@ const cloudinary = require('cloudinary').v2;
 exports.updateChannel = async (req, res, next) => {
   try {
     const { name, channelName, about } = req.body;
-    let avatar = normalizeAvatar(req.body.avatar);
+    let avatar = req.body.avatar ? normalizeAvatar(req.body.avatar) : undefined;
     let coverImage = req.body.coverImage;
 
     if (req.files) {
       if (req.files.avatar && req.files.avatar[0]) {
-        const result = await cloudinary.uploader.upload(req.files.avatar[0].path, {
-          folder: 'tubeindia/avatars',
-        });
+        const result = await cloudinary.uploader.upload(req.files.avatar[0].path, imageUploadOptions('bideo/avatars'));
         avatar = result.secure_url;
       }
       if (req.files.coverImage && req.files.coverImage[0]) {
-        const result = await cloudinary.uploader.upload(req.files.coverImage[0].path, {
-          folder: 'tubeindia/covers',
-        });
+        const result = await cloudinary.uploader.upload(req.files.coverImage[0].path, imageUploadOptions('bideo/covers'));
         coverImage = result.secure_url;
       }
     }
 
+    const updateData = { name, channelName, about };
+    if (avatar !== undefined) updateData.avatar = avatar;
+    if (coverImage !== undefined) updateData.coverImage = coverImage;
+
     const user = await User.findByIdAndUpdate(
       req.user.id,
-      { name, channelName, about, avatar, coverImage },
+      updateData,
       { new: true, runValidators: true }
     );
 
