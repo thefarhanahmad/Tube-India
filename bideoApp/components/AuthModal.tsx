@@ -15,10 +15,10 @@ import { useRouter } from "expo-router";
 
 WebBrowser.maybeCompleteAuthSession();
 
-interface AuthModalProps { 
-  visible: boolean; 
-  onClose: () => void; 
-  onLoginSuccess?: (user?: any) => void; 
+interface AuthModalProps {
+  visible: boolean;
+  onClose: () => void;
+  onLoginSuccess?: (user?: any) => void;
 }
 
 const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, onLoginSuccess }) => {
@@ -50,9 +50,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, onLoginSuccess 
     if (!token || !userData) {
       throw new Error('Invalid authentication response');
     }
-    if (token) { 
-      await AsyncStorage.setItem('token', token); 
-      setAuthToken(token); 
+    if (token) {
+      await AsyncStorage.setItem('token', token);
+      setAuthToken(token);
     }
     dispatch(loginSuccess({ user: userData, token } as any));
     onLoginSuccess?.(userData);
@@ -62,40 +62,40 @@ const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, onLoginSuccess 
   const getUserInfo = useCallback(async (accessToken: string) => {
     try {
       const res = await fetch("https://www.googleapis.com/userinfo/v2/me", { headers: { Authorization: `Bearer ${accessToken}` } });
-      const user = await res.json(); 
+      const user = await res.json();
       dispatch(loginStart());
-      try { 
-        const backendRes = await authService.googleLogin({ 
-          name: user.name, 
-          email: user.email, 
-          avatar: user.picture || user.avatar || '' 
-        }); 
-        await persistAuth(backendRes); 
+      try {
+        const backendRes = await authService.googleLogin({
+          name: user.name,
+          email: user.email,
+          avatar: user.picture || user.avatar || ''
+        });
+        await persistAuth(backendRes);
       }
-      catch (err: any) { 
-        dispatch(loginFailure('Backend login failed')); 
-        showAlert('Login Failed','Unable to complete login with backend'); 
+      catch (err: any) {
+        dispatch(loginFailure('Backend login failed'));
+        showAlert('Login Failed', 'Unable to complete login with backend');
       }
-    } catch { 
-      showAlert("Login Failed", "Could not fetch user info"); 
+    } catch {
+      showAlert("Login Failed", "Could not fetch user info");
     }
   }, [dispatch, persistAuth]);
 
-  useEffect(() => { 
-    if (response?.type === "success") { 
-      const { accessToken } = response.authentication || {}; 
-      if (accessToken) getUserInfo(accessToken); 
-    } 
+  useEffect(() => {
+    if (response?.type === "success") {
+      const { accessToken } = response.authentication || {};
+      if (accessToken) getUserInfo(accessToken);
+    }
   }, [response, getUserInfo]);
 
   const handlePhoneAuth = useCallback(async () => {
     if ((isSignup && !name.trim()) || !phone.trim() || !password) return showAlert('Missing Fields', 'Please fill name, phone and password.');
     if (phone.trim().length !== 10) return showAlert('Invalid Phone', 'Phone number must be 10 digits.');
-    
+
     dispatch(loginStart());
     try {
-      const backendRes = isSignup 
-        ? await authService.signupWithPhone({ name: name.trim(), phone: phone.trim(), password }) 
+      const backendRes = isSignup
+        ? await authService.signupWithPhone({ name: name.trim(), phone: phone.trim(), password })
         : await authService.loginWithPhone({ phone: phone.trim(), password });
       await persistAuth(backendRes);
     } catch (err: any) {
@@ -106,7 +106,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, onLoginSuccess 
   }, [isSignup, name, phone, password, dispatch, persistAuth]);
 
   const handleGoogleLogin = useCallback(async () => {
-    if (Platform.OS === 'android' && !ANDROID_CLIENT_ID) return showAlert('Google Login Not Configured','Set EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID in your app env to enable Google login on Android.');
+    if (Platform.OS === 'android' && !ANDROID_CLIENT_ID) return showAlert('Google Login Not Configured', 'Set EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID in your app env to enable Google login on Android.');
     try { await promptAsync(); } catch { showAlert("Login Error", "Something went wrong"); }
   }, [ANDROID_CLIENT_ID, promptAsync]);
 
@@ -119,10 +119,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, onLoginSuccess 
   const togglePassword = useCallback(() => setShowPassword(prev => !prev), []);
 
   return (
-    <Modal 
-      visible={visible} 
-      transparent 
-      animationType="fade" 
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
       onRequestClose={onClose}
       statusBarTranslucent
     >
@@ -138,10 +138,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, onLoginSuccess 
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
             >
-              <TouchableOpacity style={styles.closeButton} onPress={onClose} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+              <TouchableOpacity style={styles.closeButton} onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                 <Ionicons name="close" size={24} color={Colors.text} />
               </TouchableOpacity>
-              
+
               <View style={styles.header}>
                 <Ionicons name="person-circle-outline" size={70} color={Colors.primary} />
                 <Text style={styles.title}>{isSignup ? 'Create Account' : 'Welcome Back'}</Text>
@@ -149,35 +149,35 @@ const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, onLoginSuccess 
               </View>
 
               {isSignup && (
-                <TextInput 
-                  style={styles.input} 
-                  placeholder="Full Name" 
-                  value={name} 
+                <TextInput
+                  style={styles.input}
+                  placeholder="Full Name"
+                  value={name}
                   onChangeText={setName}
                   autoCorrect={false}
                 />
               )}
-              
-              <TextInput 
-                style={styles.input} 
-                placeholder="Phone Number" 
-                value={phone} 
-                onChangeText={(v) => setPhone(v.replace(/\D/g, '').slice(0, 10))} 
-                keyboardType="phone-pad" 
+
+              <TextInput
+                style={styles.input}
+                placeholder="Phone Number"
+                value={phone}
+                onChangeText={(v) => setPhone(v.replace(/\D/g, '').slice(0, 10))}
+                keyboardType="phone-pad"
                 maxLength={10}
                 autoCorrect={false}
               />
-              
+
               <View style={styles.passwordRow}>
-                <TextInput 
-                  style={[styles.input, styles.passwordInput]} 
-                  placeholder="Password" 
-                  value={password} 
-                  onChangeText={setPassword} 
+                <TextInput
+                  style={[styles.input, styles.passwordInput]}
+                  placeholder="Password"
+                  value={password}
+                  onChangeText={setPassword}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                 />
-                <TouchableOpacity style={styles.eyeButton} onPress={togglePassword} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+                <TouchableOpacity style={styles.eyeButton} onPress={togglePassword} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                   <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={22} color={Colors.textGray} />
                 </TouchableOpacity>
               </View>
@@ -226,120 +226,124 @@ const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, onLoginSuccess 
   );
 };
 
-const styles = StyleSheet.create({ 
-  overlay: { 
-    flex: 1, 
-    backgroundColor: "rgba(0,0,0,0.5)", 
-    justifyContent: "flex-end" 
-  }, 
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: Colors.white,
+  },
   keyboardView: {
-    width: '100%',
+    flex: 1,
   },
-  modalContent: { 
-    backgroundColor: Colors.white, 
-    borderTopLeftRadius: 30, 
-    borderTopRightRadius: 30, 
-    padding: 24, 
-    maxHeight: '90%' 
-  }, 
+  modalContent: {
+    flex: 1,
+    backgroundColor: Colors.white,
+    paddingHorizontal: 20,
+    paddingTop: 40,
+  },
   scrollContent: {
-    alignItems: 'center', 
+    flexGrow: 1,
+    alignItems: 'center',
     width: '100%',
-    paddingBottom: Platform.OS === 'ios' ? 40 : 20
+    paddingBottom: 20,
+    justifyContent: 'center',
   },
-  closeButton: { 
-    alignSelf: "flex-end",
-    padding: 4
-  }, 
-  header: { 
-    alignItems: "center", 
-    marginBottom: 20 
-  }, 
-  title: { 
-    fontSize: 26, 
-    fontWeight: "800", 
-    color: Colors.text, 
-    marginTop: 10, 
-    marginBottom: 8 
-  }, 
-  subtitle: { 
-    fontSize: 14, 
-    color: Colors.textGray, 
-    textAlign: "center", 
-    lineHeight: 20, 
-    paddingHorizontal: 20 
-  }, 
-  input: { 
-    width: "100%", 
+  closeButton: {
+    position: 'absolute',
+    top: 5,
+    left: -5,
+    padding: 10,
+    zIndex: 10,
+  },
+  header: {
+    alignItems: "center",
+    marginBottom: 20,
+    marginTop: -20,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: Colors.text,
+    marginTop: 12,
+    marginBottom: 6
+  },
+  subtitle: {
+    fontSize: 14,
+    color: Colors.textGray,
+    textAlign: "center",
+    lineHeight: 20,
+    paddingHorizontal: 15
+  },
+  input: {
+    width: "100%",
     height: 52,
-    borderWidth: 1, 
-    borderColor: "#E5E7EB", 
-    borderRadius: 14, 
-    paddingHorizontal: 16, 
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 14,
+    paddingHorizontal: 16,
     fontSize: 16,
     color: Colors.text,
     backgroundColor: '#F9FAFB',
-    marginBottom: 12 
-  }, 
-  passwordRow: { 
-    width: "100%", 
-    flexDirection: "row", 
-    alignItems: "center", 
-    borderWidth: 1, 
-    borderColor: "#E5E7EB", 
-    borderRadius: 14, 
+    marginBottom: 12
+  },
+  passwordRow: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 14,
     backgroundColor: '#F9FAFB',
-    marginBottom: 12, 
-    paddingRight: 8 
-  }, 
-  passwordInput: { 
-    flex: 1, 
-    marginBottom: 0, 
+    marginBottom: 12,
+    paddingRight: 8
+  },
+  passwordInput: {
+    flex: 1,
+    marginBottom: 0,
     borderWidth: 0,
     backgroundColor: 'transparent'
-  }, 
-  eyeButton: { 
-    padding: 10 
-  }, 
-  forgotBtn: { 
-    alignSelf: 'flex-end', 
+  },
+  eyeButton: {
+    padding: 10
+  },
+  forgotBtn: {
+    alignSelf: 'flex-end',
     marginBottom: 20,
     paddingVertical: 2
   },
-  forgotText: { 
-    color: Colors.primary, 
-    fontSize: 14, 
-    fontWeight: '700' 
+  forgotText: {
+    color: Colors.primary,
+    fontSize: 14,
+    fontWeight: '700'
   },
-  primaryButton: { 
-    backgroundColor: Colors.primary, 
-    width: "100%", 
+  primaryButton: {
+    backgroundColor: Colors.primary,
+    width: "100%",
     height: 54,
-    borderRadius: 27, 
-    alignItems: "center", 
-    justifyContent: "center", 
+    borderRadius: 27,
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 16,
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4
-  }, 
+  },
   primaryButtonText: {
-    color: Colors.white, 
-    fontSize: 17, 
+    color: Colors.white,
+    fontSize: 17,
     fontWeight: "700"
   },
-  switchLineText: { 
-    fontSize: 14, 
-    color: Colors.textGray, 
-    textAlign: "center", 
-    marginBottom: 20 
-  }, 
-  switchLineAction: { 
-    color: Colors.primary, 
-    fontWeight: "800" 
-  }, 
+  switchLineText: {
+    fontSize: 14,
+    color: Colors.textGray,
+    textAlign: "center",
+    marginBottom: 20
+  },
+  switchLineAction: {
+    color: Colors.primary,
+    fontWeight: "800"
+  },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -351,27 +355,27 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#E5E7EB'
   },
-  orText: { 
-    fontSize: 13, 
-    color: Colors.textGray, 
+  orText: {
+    fontSize: 13,
+    color: Colors.textGray,
     marginHorizontal: 12,
     fontWeight: '600'
-  }, 
-  googleButton: { 
-    flexDirection: "row", 
+  },
+  googleButton: {
+    flexDirection: "row",
     backgroundColor: '#4285F4', // Official Google Blue
-    width: "100%", 
+    width: "100%",
     height: 54,
-    borderRadius: 27, 
-    alignItems: "center", 
-    justifyContent: "center", 
-    marginBottom: 10 
-  }, 
-  googleButtonText: { 
-    color: Colors.white, 
-    fontSize: 16, 
-    fontWeight: "700", 
-    marginLeft: 12 
+    borderRadius: 27,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10
+  },
+  googleButtonText: {
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: "700",
+    marginLeft: 12
   }
 });
 
