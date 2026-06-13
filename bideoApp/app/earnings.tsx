@@ -87,89 +87,11 @@ export default function EarningsScreen() {
               <Text style={styles.withdrawBtnText}>Withdraw</Text>
             </TouchableOpacity>
           </LinearGradient>
-
-          {/* Stat cards */}
-          <View style={styles.statRow}>
-            <StatBox icon="eye-outline" label="Total Views" value={formatViews(totalViews)} tint="#3B82F6" />
-            <StatBox icon="trending-up-outline" label="Est. Potential" value={`₹${estimatedPotential}`} tint="#10B981" />
-            <StatBox icon="videocam-outline" label="Videos" value={String(videoCount)} tint={Colors.primary} />
-          </View>
-
-          {/* Monetization eligibility */}
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View style={[styles.cardIcon, { backgroundColor: (eligible ? '#10B981' : Colors.primary) + '1A' }]}>
-                <Ionicons name={eligible ? 'checkmark-circle' : 'rocket-outline'} size={20} color={eligible ? '#10B981' : Colors.primary} />
-              </View>
-              <Text style={styles.cardTitle}>{eligible ? "You're eligible!" : 'Monetization progress'}</Text>
-            </View>
-            <Text style={styles.cardSub}>
-              {eligible
-                ? 'You meet the requirements. Monetization will switch on for you as soon as it launches.'
-                : 'Reach these milestones to qualify for monetization when it launches.'}
-            </Text>
-
-            <ProgressRow label="Followers" current={followers} goal={FOLLOWER_GOAL} progress={followerProgress} />
-            <ProgressRow label="Total views" current={totalViews} goal={VIEW_GOAL} progress={viewProgress} />
-          </View>
-
-          {/* How you'll earn */}
-          <View style={styles.card}>
-            <Text style={[styles.cardTitle, { marginBottom: 4 }]}>How you'll earn</Text>
-            {[
-              { icon: 'megaphone-outline', title: 'Ad revenue', desc: 'Earn a share from ads shown on your videos.' },
-              { icon: 'people-outline', title: 'Channel memberships', desc: 'Offer paid perks to your biggest fans.' },
-              { icon: 'gift-outline', title: 'Tips & Super Chats', desc: 'Let viewers support you directly.' },
-            ].map((row) => (
-              <View key={row.title} style={styles.earnRow}>
-                <View style={styles.earnIcon}>
-                  <Ionicons name={row.icon as any} size={18} color={Colors.primary} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.earnTitle}>{row.title}</Text>
-                  <Text style={styles.earnDesc}>{row.desc}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
-
-          {/* Info banner */}
-          <View style={styles.banner}>
-            <Ionicons name="information-circle" size={20} color={Colors.primary} />
-            <Text style={styles.bannerText}>
-              We're building a secure payment gateway and creator monetization. This page will show your
-              real earnings and let you withdraw very soon. Thanks for being an early creator!
-            </Text>
-          </View>
         </ScrollView>
       )}
     </View>
   );
 }
-
-const StatBox = ({ icon, label, value, tint }: { icon: any; label: string; value: string; tint: string }) => (
-  <View style={styles.statBox}>
-    <View style={[styles.statIcon, { backgroundColor: tint + '1A' }]}>
-      <Ionicons name={icon} size={18} color={tint} />
-    </View>
-    <Text style={styles.statValue} numberOfLines={1}>{value}</Text>
-    <Text style={styles.statLabel}>{label}</Text>
-  </View>
-);
-
-const ProgressRow = ({ label, current, goal, progress }: { label: string; current: number; goal: number; progress: number }) => (
-  <View style={styles.progressRow}>
-    <View style={styles.progressLabelRow}>
-      <Text style={styles.progressLabel}>{label}</Text>
-      <Text style={styles.progressValue}>
-        {formatViews(current)} / {formatViews(goal)}
-      </Text>
-    </View>
-    <View style={styles.progressTrack}>
-      <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` }]} />
-    </View>
-  </View>
-);
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F4F5F7' },
@@ -177,7 +99,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingBottom: 12,
     backgroundColor: Colors.white,
     borderBottomWidth: 1,
@@ -186,9 +108,9 @@ const styles = StyleSheet.create({
   backBtn: { padding: 2 },
   headerTitle: { fontSize: 18, fontWeight: '700', color: Colors.text },
   hero: {
-    margin: 16,
-    borderRadius: 24,
-    padding: 22,
+    margin: 12,
+    borderRadius: 20,
+    padding: 18,
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
@@ -213,56 +135,4 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   withdrawBtnText: { color: Colors.primary, fontSize: 14, fontWeight: '700' },
-  statRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 10 },
-  statBox: {
-    flex: 1,
-    backgroundColor: Colors.white,
-    borderRadius: 16,
-    padding: 14,
-    alignItems: 'flex-start',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  statIcon: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
-  statValue: { fontSize: 17, fontWeight: '800', color: Colors.text },
-  statLabel: { fontSize: 11, color: Colors.textGray, marginTop: 2 },
-  card: {
-    backgroundColor: Colors.white,
-    borderRadius: 18,
-    padding: 18,
-    marginHorizontal: 16,
-    marginTop: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  cardIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: Colors.text },
-  cardSub: { fontSize: 13, color: Colors.textGray, lineHeight: 19, marginBottom: 14 },
-  progressRow: { marginTop: 12 },
-  progressLabelRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  progressLabel: { fontSize: 13, fontWeight: '600', color: Colors.text },
-  progressValue: { fontSize: 12, color: Colors.textGray },
-  progressTrack: { height: 8, borderRadius: 4, backgroundColor: '#EEF0F2', overflow: 'hidden' },
-  progressFill: { height: '100%', borderRadius: 4, backgroundColor: Colors.primary },
-  earnRow: { flexDirection: 'row', alignItems: 'center', marginTop: 14 },
-  earnIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: Colors.primary + '14', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  earnTitle: { fontSize: 14, fontWeight: '700', color: Colors.text },
-  earnDesc: { fontSize: 12, color: Colors.textGray, marginTop: 1 },
-  banner: {
-    flexDirection: 'row',
-    gap: 10,
-    backgroundColor: Colors.primary + '12',
-    borderRadius: 16,
-    padding: 14,
-    marginHorizontal: 16,
-    marginTop: 16,
-  },
-  bannerText: { flex: 1, fontSize: 12.5, color: Colors.text, lineHeight: 18 },
 });

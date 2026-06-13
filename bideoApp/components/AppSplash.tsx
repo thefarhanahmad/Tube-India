@@ -11,8 +11,8 @@ import Colors from '../constants/Colors';
 export default function AppSplash({ onLayout }: { onLayout?: () => void }) {
   return (
     <View style={styles.root} onLayout={onLayout}>
-      <Image 
-        source={require('../assets/splash_screen.png')} 
+      <Image
+        source={require('../assets/splash_screen.png')}
         style={styles.splashImage}
         resizeMode="contain"
       />

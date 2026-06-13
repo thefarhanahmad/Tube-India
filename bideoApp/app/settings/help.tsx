@@ -112,8 +112,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingTop: 50,
-    paddingBottom: 15,
-    paddingHorizontal: 20,
+    paddingBottom: 12,
+    paddingHorizontal: 15,
     backgroundColor: Colors.white,
     borderBottomWidth: 1,
     borderBottomColor: '#EEEEEE',
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '700',
-    marginLeft: 15,
+    marginLeft: 12,
     color: Colors.text,
   },
   content: {
@@ -132,11 +132,11 @@ const styles = StyleSheet.create({
   },
   searchBanner: {
     backgroundColor: Colors.primary,
-    paddingVertical: 40,
-    paddingHorizontal: 20,
+    paddingVertical: 30,
+    paddingHorizontal: 15,
     alignItems: 'center',
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    borderBottomLeftRadius: 25,
+    borderBottomRightRadius: 25,
   },
   bannerTitle: {
     fontSize: 24,
@@ -158,8 +158,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   section: {
-    paddingHorizontal: 20,
-    paddingTop: 30,
+    paddingHorizontal: 15,
+    paddingTop: 20,
   },
   sectionTitle: {
     fontSize: 18,
@@ -170,8 +170,8 @@ const styles = StyleSheet.create({
   },
   faqCard: {
     backgroundColor: Colors.white,
-    borderRadius: 20,
-    paddingHorizontal: 15,
+    borderRadius: 15,
+    paddingHorizontal: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03,
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   faqItem: {
-    paddingVertical: 20,
+    paddingVertical: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
@@ -216,8 +216,8 @@ const styles = StyleSheet.create({
   contactCard: {
     flex: 1,
     backgroundColor: Colors.white,
-    padding: 20,
-    borderRadius: 20,
+    padding: 15,
+    borderRadius: 15,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: 'center',
-    paddingVertical: 50,
+    paddingVertical: 35,
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 10,

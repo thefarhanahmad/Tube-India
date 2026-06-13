@@ -83,8 +83,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingTop: 50,
-    paddingBottom: 15,
-    paddingHorizontal: 20,
+    paddingBottom: 12,
+    paddingHorizontal: 15,
     backgroundColor: Colors.white,
     borderBottomWidth: 1,
     borderBottomColor: '#EEEEEE',
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '700',
-    marginLeft: 15,
+    marginLeft: 12,
     color: Colors.text,
   },
   content: {
@@ -103,10 +103,10 @@ const styles = StyleSheet.create({
   },
   heroSection: {
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: 30,
     backgroundColor: Colors.white,
-    borderBottomLeftRadius: 40,
-    borderBottomRightRadius: 40,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
   logoWrapper: {
     width: 120,
@@ -151,9 +151,9 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: Colors.white,
-    margin: 20,
-    padding: 20,
-    borderRadius: 20,
+    margin: 15,
+    padding: 15,
+    borderRadius: 15,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   featuresSection: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 15,
     paddingBottom: 20,
   },
   featureGrid: {
@@ -182,11 +182,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   featureCard: {
-    width: (width - 55) / 2,
+    width: (width - 45) / 2,
     backgroundColor: Colors.white,
-    padding: 15,
-    borderRadius: 15,
-    marginBottom: 15,
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 12,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   footer: {
-    padding: 40,
+    padding: 30,
     alignItems: 'center',
   },
   divider: {
