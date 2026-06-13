@@ -1,6 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import Colors from '../constants/Colors';
 
 /**
@@ -12,11 +11,11 @@ import Colors from '../constants/Colors';
 export default function AppSplash({ onLayout }: { onLayout?: () => void }) {
   return (
     <View style={styles.root} onLayout={onLayout}>
-      <View style={styles.logoCircle}>
-        <Ionicons name="play" size={46} color={Colors.primary} />
-      </View>
-      <Text style={styles.brand}>Bideo</Text>
-      <Text style={styles.tagline}>Watch. Create. Grow.</Text>
+      <Image 
+        source={require('../assets/splash_screen.png')} 
+        style={styles.splashImage}
+        resizeMode="contain"
+      />
       <ActivityIndicator color={Colors.white} style={styles.spinner} />
     </View>
   );
@@ -25,37 +24,16 @@ export default function AppSplash({ onLayout }: { onLayout?: () => void }) {
 const styles = StyleSheet.create({
   root: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoCircle: {
-    width: 110,
-    height: 110,
-    borderRadius: 32,
     backgroundColor: Colors.white,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    elevation: 8,
   },
-  brand: {
-    color: Colors.white,
-    fontSize: 38,
-    fontWeight: '800',
-    marginTop: 24,
-    letterSpacing: 0.5,
-  },
-  tagline: {
-    color: 'rgba(255,255,255,0.9)',
-    fontSize: 15,
-    fontWeight: '600',
-    marginTop: 6,
+  splashImage: {
+    width: '100%',
+    height: '100%',
   },
   spinner: {
-    marginTop: 40,
+    position: 'absolute',
+    bottom: 50,
   },
 });
