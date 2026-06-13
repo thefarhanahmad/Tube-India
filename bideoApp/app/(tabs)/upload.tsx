@@ -137,15 +137,6 @@ export default function UploadScreen() {
 
       if (!result.canceled) {
         const asset: any = result.assets[0];
-        const MAX_BYTES = 100 * 1024 * 1024; // 100MB
-        if (asset.fileSize && asset.fileSize > MAX_BYTES) {
-          const sizeMb = Math.round(asset.fileSize / (1024 * 1024));
-          showAlert(
-            'Video too large',
-            `This video is about ${sizeMb}MB. Please choose one under 100MB — try trimming it or picking a lower resolution.`
-          );
-          return;
-        }
         if (uploadType === 'short') {
           if (asset.width && asset.height && Math.abs((asset.width / asset.height) - (9 / 16)) > 0.035) {
             showAlert('Invalid short', 'Shorts must be portrait 9:16 videos.');
@@ -192,7 +183,7 @@ export default function UploadScreen() {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        aspect: [16, 9],
+        aspect: uploadType === 'short' ? [9, 16] : [16, 9],
         quality: 0.7, // Lower quality prevents system editor crashes
       });
 
@@ -479,6 +470,26 @@ export default function UploadScreen() {
               </TouchableOpacity>
             ))}
           </View>
+
+          <View style={styles.instructionsSection}>
+            <Text style={styles.instructionsTitle}>Quick Guide</Text>
+            {[
+              { icon: 'videocam-outline', title: 'Videos', text: 'Share long-form content. Use 16:9 thumbnails for best results.' },
+              { icon: 'flash-outline', title: 'Shorts', text: 'Vertical 9:16 videos under 60 seconds. Perfect for quick trends.' },
+              { icon: 'document-text-outline', title: 'Posts', text: 'Engage with your community via text and images.' },
+              { icon: 'shield-checkmark-outline', title: 'Guidelines', text: 'Ensure your content follows our community standards.' },
+            ].map((item, index) => (
+              <View key={index} style={styles.instructionItem}>
+                <View style={styles.instructionIcon}>
+                  <Ionicons name={item.icon as any} size={20} color={Colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.instructionTitle}>{item.title}</Text>
+                  <Text style={styles.instructionText}>{item.text}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
         </>
       )}
 
@@ -542,7 +553,7 @@ export default function UploadScreen() {
                   <Ionicons name="cloud-upload" size={26} color={Colors.primary} />
                 </View>
                 <Text style={styles.pickerText}>Tap to select a video</Text>
-                <Text style={styles.pickerSubText}>MP4 · up to 100MB</Text>
+                <Text style={styles.pickerSubText}>MP4 format</Text>
               </>
             )}
           </TouchableOpacity>
@@ -562,7 +573,7 @@ export default function UploadScreen() {
               <Ionicons name="image" size={24} color={Colors.primary} />
             </View>
             <Text style={styles.pickerText}>Tap to add a thumbnail</Text>
-            <Text style={styles.pickerSubText}>16:9 recommended</Text>
+            <Text style={styles.pickerSubText}>{uploadType === 'short' ? '9:16 recommended' : '16:9 recommended'}</Text>
           </>
         )}
       </TouchableOpacity>
@@ -1046,6 +1057,44 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  instructionsSection: {
+    marginTop: 40,
+    paddingTop: 30,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  instructionsTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: Colors.text,
+    marginBottom: 20,
+    marginLeft: 4,
+  },
+  instructionItem: {
+    flexDirection: 'row',
+    gap: 15,
+    marginBottom: 22,
+    alignItems: 'flex-start',
+  },
+  instructionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: Colors.primary + '10',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  instructionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.text,
+    marginBottom: 4,
+  },
+  instructionText: {
+    fontSize: 13,
+    color: Colors.textGray,
+    lineHeight: 18,
   },
   progressOverlay: {
     flex: 1,

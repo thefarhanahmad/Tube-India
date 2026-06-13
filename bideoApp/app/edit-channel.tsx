@@ -78,7 +78,7 @@ export default function EditChannelScreen() {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        aspect: [16, 9], // Restored ratio
+        aspect: [16, 5], 
         quality: 0.8,
       });
 
@@ -173,7 +173,6 @@ export default function EditChannelScreen() {
 
         {/* Live Preview Section */}
         <View style={styles.previewCard}>
-          <Text style={styles.sectionLabel}>Profile Preview</Text>
           <View style={styles.previewContainer}>
             <TouchableOpacity style={styles.coverSelector} onPress={pickCoverImage}>
               {getAvatarUri(coverImage) ? (
@@ -185,12 +184,12 @@ export default function EditChannelScreen() {
                   end={{ x: 1, y: 1 }}
                   style={styles.coverPlaceholder}
                 >
-                  <Ionicons name="image-outline" size={30} color={Colors.white} />
+                  <Ionicons name="image-outline" size={24} color={Colors.white} />
                   <Text style={styles.placeholderText}>Add Banner</Text>
                 </LinearGradient>
               )}
               <View style={styles.cameraBadgeCover}>
-                <Ionicons name="camera" size={18} color={Colors.white} />
+                <Ionicons name="camera" size={16} color={Colors.white} />
               </View>
             </TouchableOpacity>
             
@@ -201,19 +200,18 @@ export default function EditChannelScreen() {
                     <Image source={{ uri: getAvatarUri(avatar)! }} style={styles.previewAvatar} contentFit="cover" transition={200} />
                   ) : (
                     <View style={styles.avatarPlaceholder}>
-                      <Ionicons name="person" size={32} color={Colors.textGray} />
+                      <Ionicons name="person" size={28} color={Colors.textGray} />
                     </View>
                   )}
                 </View>
                 <View style={styles.cameraBadgeAvatar}>
-                  <Ionicons name="camera" size={14} color={Colors.white} />
+                  <Ionicons name="camera" size={12} color={Colors.white} />
                 </View>
               </TouchableOpacity>
             </View>
 
             <View style={styles.previewIdentity}>
               <Text style={styles.previewName} numberOfLines={1}>{channelName || user?.name || 'Your Channel'}</Text>
-              <Text style={styles.previewHandle}>Profile Preview</Text>
             </View>
           </View>
         </View>
@@ -240,7 +238,6 @@ export default function EditChannelScreen() {
               value={channelName}
               onChangeText={setChannelName}
             />
-            <Text style={styles.helpText}>This is your unique channel identity.</Text>
           </View>
 
           <View style={styles.inputGroup}>
@@ -250,7 +247,7 @@ export default function EditChannelScreen() {
               placeholder="Tell the world what your channel is about..."
               placeholderTextColor={Colors.textGray}
               multiline
-              numberOfLines={4}
+              numberOfLines={3}
               value={about}
               onChangeText={setAbout}
             />
@@ -279,7 +276,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB',
   },
   content: {
-    paddingBottom: 40,
+    paddingBottom: 20,
   },
   
   // Header
@@ -287,9 +284,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 50,
-    paddingBottom: 16,
+    paddingHorizontal: 15,
+    paddingTop: 40,
+    paddingBottom: 12,
     backgroundColor: Colors.white,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
@@ -303,7 +300,7 @@ const styles = StyleSheet.create({
     color: Colors.text,
   },
   saveHeaderBtn: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 15,
     paddingVertical: 6,
     borderRadius: 20,
     backgroundColor: Colors.primary + '10',
@@ -315,39 +312,24 @@ const styles = StyleSheet.create({
   },
 
   // Preview Card
-  sectionLabel: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: Colors.textGray,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 12,
-    marginLeft: 4,
-  },
   previewCard: {
-    margin: 16,
+    margin: 12,
   },
   previewContainer: {
     backgroundColor: Colors.white,
-    borderRadius: 16,
+    borderRadius: 12,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: Colors.border,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
   },
   coverSelector: {
     width: '100%',
-    aspectRatio: 16 / 9, // Match restored profile ratio
+    aspectRatio: 16 / 5,
     backgroundColor: '#F3F4F6',
   },
   previewCover: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
   },
   coverPlaceholder: {
     flex: 1,
@@ -355,43 +337,42 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   placeholderText: {
-    marginTop: 8,
+    marginTop: 4,
     color: Colors.white,
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '700',
   },
   cameraBadgeCover: {
     position: 'absolute',
-    bottom: 12,
-    right: 12,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    padding: 8,
-    borderRadius: 20,
+    bottom: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: 6,
+    borderRadius: 15,
   },
   
   avatarPreviewRow: {
-    paddingHorizontal: 16,
-    marginTop: -35, // Match profile overlap
+    paddingHorizontal: 12,
+    marginTop: -30,
   },
   avatarSelector: {
     alignSelf: 'flex-start',
   },
   avatarWrapper: {
-    padding: 3,
+    padding: 2,
     backgroundColor: Colors.white,
-    borderRadius: 40,
-    elevation: 2,
+    borderRadius: 35,
   },
   previewAvatar: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: Colors.border,
   },
   avatarPlaceholder: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
@@ -401,85 +382,68 @@ const styles = StyleSheet.create({
     bottom: 0,
     right: 0,
     backgroundColor: Colors.primary,
-    padding: 6,
-    borderRadius: 15,
+    padding: 4,
+    borderRadius: 12,
     borderWidth: 2,
     borderColor: Colors.white,
   },
   previewIdentity: {
-    padding: 16,
-    paddingTop: 8,
+    padding: 12,
+    paddingTop: 6,
   },
   previewName: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '800',
     color: Colors.text,
-  },
-  previewHandle: {
-    fontSize: 13,
-    color: Colors.textGray,
-    marginTop: 2,
   },
 
   // Form
   formCard: {
     backgroundColor: Colors.white,
-    margin: 16,
-    marginTop: 0,
-    padding: 20,
-    borderRadius: 16,
+    marginHorizontal: 12,
+    padding: 15,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: Colors.border,
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: 15,
   },
   fieldLabel: {
     fontSize: 14,
     fontWeight: '700',
     color: Colors.text,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   textInput: {
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    borderRadius: 10,
-    padding: 14,
-    fontSize: 16,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 15,
     color: Colors.text,
     backgroundColor: '#F9FAFB',
   },
   textArea: {
-    height: 120,
+    height: 80,
     textAlignVertical: 'top',
-  },
-  helpText: {
-    fontSize: 12,
-    color: Colors.textGray,
-    marginTop: 6,
-    fontStyle: 'italic',
   },
 
   // Footer Button
   mainSaveBtn: {
-    margin: 16,
+    margin: 12,
     backgroundColor: Colors.primary,
-    height: 56,
-    borderRadius: 28,
+    height: 50,
+    borderRadius: 25,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 4,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
   },
   disabledBtn: {
     opacity: 0.7,
   },
   mainSaveBtnText: {
     color: Colors.white,
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '700',
   },
 });
