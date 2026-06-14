@@ -31,6 +31,7 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://192.168.3.107:5173",
   "exp://192.168.3.107:8081",
+  "https://bideo-t.netlify.app",
 ];
 
 app.use(
