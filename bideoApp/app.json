@@ -21,8 +21,9 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "usesCleartextTraffic": true,
-      "permissions": ["android.permission.RECORD_AUDIO"]
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -56,7 +57,8 @@
         }
       ],
       "expo-web-browser",
-      "expo-video"
+      "expo-video",
+      "expo-font"
     ],
     "experiments": {
       "reactCompiler": false
